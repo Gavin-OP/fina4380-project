@@ -2,7 +2,9 @@
 
 This is a Quant portfolio strategy.
 
-## Predictors
+## Trading Strategy Design
+
+### Predictors
 
 - Bollinger Bands
 - Relative Strength Index
@@ -10,7 +12,7 @@ This is a Quant portfolio strategy.
 - Rate of Change
 - 
 
-## Strategies
+### Strategies
 
 - Mean-Reversion Strategy
 - Long Short Strategy
@@ -19,9 +21,17 @@ This is a Quant portfolio strategy.
 - Statistical Arbitrage Strategy
   - Pairs Trading
 - Volatility Trading
--  Event-Driven Strategies
+- Event-Driven Strategies
+
+### Capital Allocation
+
+- Kelly criterion
 
 ## References
+
+[Beginner's Guide to Quantitative Trading | QuantStart](https://www.quantstart.com/articles/Beginners-Guide-to-Quantitative-Trading/)
+
+[Quant hedge fund primer: demystifying quantitative strategies](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
 
 [WebClinic GitHub](https://github.com/webclinic017)
 
@@ -53,5 +63,6 @@ This is a Quant portfolio strategy.
 
 [Top 10 Quantitative Trading Strategies with Python](https://zodiactrading.medium.com/top-10-quantitative-trading-strategies-with-python-82b1eff67650)
 
-[Quant hedge fund primer: demystifying quantitative strategies](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
+[Quantitative Trading - Overview, Components, How It Works | Wall Street Oasis](https://www.wallstreetoasis.com/resources/skills/trading-investing/quantitative-trading)
 
+[Quantitative Finance (arxiv.org)](https://arxiv.org/archive/q-fin)
