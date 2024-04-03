@@ -2,37 +2,34 @@
 
 This is a Quant portfolio strategy.
 
-## Trading Strategy Design
-
-### Predictors
-
-- Bollinger Bands
-- Relative Strength Index
-- Moving Average Convergence Divergence
-- Rate of Change
-- Risk Factors
-- Value
-- Growth
-- Market Cap
-- Sector
-- Momentum
-- Geography
-
-### Common Quant Strategies
+## Common Quant Strategies
 
 - **Equity statistical arbitrage**
   - utilize price data and its derivatives, such as correlation, volatility, and other forms of market data, such as volume and order-book information to determine the existence of patterns. 
-  - Signal types:
-    - Mean-reversion: revert to an equilibrium level (i.e. Paired trading). 
+  - Signal types[^1]:
+    - Mean-reversion: revert to an equilibrium level (i.e. Paired trading, volatility strategy). 
     - Momentum: price movements will be more persistent (i.e., trend).
     - Event-driven: analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, and corporate insider buying/selling.
-- **Quantitative equity market neutral**
+- **Quantitative equity market neutral**[^2]
   - take fundamental and/or event-oriented data, such as balance sheet information and cash flow statement statistics, and systematically rank/score stocks against these metrics in varying proportions. The weights of the scores of the different fundamental data sources may be fixed or dynamic. Use machine learning algorithms to analyze and process various signals. 
   - Signal types:
     - Fundamental data: financial data such as earnings, revenue, profit margins, and cash flow, as well as non-financial data such as industry trends and macroeconomic indicators.
     - Technical data: past market trends and patterns, such as moving averages, relative strength, and trading volume.
     - Sentiment data: investor sentiment and market sentiment, such as news articles, social media posts, and analyst reports.
     - Alternative data: non-traditional data sources, such as satellite imagery, credit card data, and weather patterns, which can provide insight into market trends and consumer behavior.
+
+  - Procedures:
+    - Data collection and processing
+    - Signal generation
+    - Signal combination and weighting
+      - Kelly criterion
+      - Efficient frontier
+
+    - Portfolio construction and risk management
+      - Stop loss order
+      - Position size limits
+      - Portfolio factor exposure limits
+      - Liquidity constraint
 
 - **Managed futures/CTAs**
 - **Quant macro**
@@ -50,21 +47,21 @@ This is a Quant portfolio strategy.
 | Liquidity                                                | Generally highly liquid                   | Generally highly liquid                                                                             | Generally highly liquid                                                                    | Generally highly liquid                                                                    | Generally highly liquid                                                                                          |
 | Leverage                                                 | Can vary significantly: typically 3-8x    | Can vary significantly: typically 3-8x                                                              | Typical 2-4x (with MTE typically 10-30%)                                                   | Typical 2-4x (with MTE typically 15-40%)                                                   | Varied (typically 1.5 to 2.0x)                                                                                   |
 
-- Long Short Strategy
-- Trend Following Strategy
-- Volatility Trading
+## Trading Strategy Design
 
-### Capital Allocation
+### Predictors
 
-- Kelly criterion
-- Efficient frontier
-
-### Risk Management
-
-- Stop loss order
-- Position size limits
-- Portfolio factor exposure limits
-- Liquidity constraint
+- Bollinger Bands
+- Relative Strength Index
+- Moving Average Convergence Divergence
+- Rate of Change
+- Risk Factors
+- Value
+- Growth
+- Market Cap
+- Sector
+- Momentum
+- Geography
 
 ## References
 
@@ -107,3 +104,6 @@ This is a Quant portfolio strategy.
 [Quantitative Finance (arxiv.org)](https://arxiv.org/archive/q-fin)
 
 [An introduction to NMF and how it differs from PCA | Medium](https://medium.com/@354047384/an-introduction-to-nmf-and-how-it-differs-from-pca-3d8e4080df83)
+
+[^1]: Signals in the context of quant hedge funds refer to mathematical models and algorithms that analyse large volumes of financial data to identify patterns and trends. These signals are used to make investment decisions and execute trades.
+[^2]: Long Short Strategy
