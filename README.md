@@ -11,16 +11,29 @@ This is a Quant portfolio strategy.
 - Moving Average Convergence Divergence
 - Rate of Change
 - Risk Factors
+- Value
+- Growth
+- Market Cap
+- Sector
+- Momentum
+- Geography
 
 ### Common Quant Strategies
 
 - **Equity statistical arbitrage**
-  - utilize price data and its derivatives, such as correlation, volatility, and other forms of market data, such as volume and order-book information to determine the existence of patterns
-  - Signal Types:
-    - Mean-reversion: revert to an equilibrium level
+  - utilize price data and its derivatives, such as correlation, volatility, and other forms of market data, such as volume and order-book information to determine the existence of patterns. 
+  - Signal types:
+    - Mean-reversion: revert to an equilibrium level (i.e. Paired trading). 
     - Momentum: price movements will be more persistent (i.e., trend).
     - Event-driven: analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, and corporate insider buying/selling.
 - **Quantitative equity market neutral**
+  - take fundamental and/or event-oriented data, such as balance sheet information and cash flow statement statistics, and systematically rank/score stocks against these metrics in varying proportions. The weights of the scores of the different fundamental data sources may be fixed or dynamic.
+  - Signal types:
+    - Fundamental data: financial data such as earnings, revenue, profit margins, and cash flow, as well as non-financial data such as industry trends and macroeconomic indicators.
+    - Technical data: past market trends and patterns, such as moving averages, relative strength, and trading volume.
+    - Sentiment data: investor sentiment and market sentiment, such as news articles, social media posts, and analyst reports.
+    - Alternative data: non-traditional data sources, such as satellite imagery, credit card data, and weather patterns, which can provide insight into market trends and consumer behaviour.
+
 - **Managed futures/CTAs**
 - **Quant macro**
 - **Alternative risk premia**
@@ -39,14 +52,19 @@ This is a Quant portfolio strategy.
 
 - Long Short Strategy
 - Trend Following Strategy
-  - Momentum
-- Statistical Arbitrage Strategy
-  - Pairs Trading
 - Volatility Trading
 
 ### Capital Allocation
 
 - Kelly criterion
+- Efficient frontier
+
+### Risk Management
+
+- Stop loss order
+- Position size limits
+- Portfolio factor exposure limits
+- Liquidity constraint
 
 ## References
 
