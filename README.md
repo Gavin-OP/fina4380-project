@@ -10,17 +10,39 @@ This is a Quant portfolio strategy.
 - Relative Strength Index
 - Moving Average Convergence Divergence
 - Rate of Change
+-  Risk Factors
 
-### Strategies
+### Common Quant Strategies
 
-- Mean-Reversion Strategy
+- **Equity statistical arbitrage**
+  - utilize price data and its derivatives, such as correlation, volatility, and other forms of market data, such as volume and order-book information to determine the existence of patterns
+  - Signal Types:
+    - Mean-reversion: revert to an equilibrium level
+    - Momentum: price movements will be more persistent (i.e., trend). 
+    - Event-driven: analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, and corporate insider buying/selling.
+- **Quantitative equity market neutral**
+- **Managed futures/CTAs**
+- **Quant macro**
+- **Alternative risk premia**
+- **Quant volatility**
+
+| Risk Return Summary                                      | Statistical arbitrage                     | QEMN                                                         | CTAs                                                         | Quant macro/GAA                                              | Alternative risk premia                                      |
+| -------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Typical assets traded                                    | Equities                                  | Equities                                                     | Liquid futures – equity, fixed income, commodities.          | Similar to CTAs + cash instruments, bonds, FX, ETFs, Derivatives | Primarily equities, but may also trade some derivatives and instruments similar to quant macro |
+| Typical market directionality /neutrality                | Primarily market neutral                  | Primarily market neutral                                     | Generally directional                                        | Generally relative value. Some have directional positions    | Generally market neutral long-term (some exceptions)         |
+| Observed beta to traditional assets (equities and bonds) | Typically very low                        | Typically very low                                           | Typically low                                                | Typically low                                                | Typically low to moderate                                    |
+| Long/short bias                                          | None                                      | None                                                         | May be directional but should have no systemic bias to be long or short over the long-term | May be directional but should have no systemic bias to be long or short over the long-term | Typically no bias                                            |
+| Historical volatility                                    | Lower volatility than typical HF universe | Lower volatility than typical HF universe                    | Higher volatility than wider HF universe                     | Higher volatility than wider HF universe                     | Potential exposure to large factor moves – can be large/long drawdowns |
+| Typical factor exposure                                  | Tightly hedged to generic factors         | May be hedged to generic factors, but tends to take specific exposure to certain equity risk premia | Typically highly exposed to momentum                         | Varied, may be tightly hedged; could have a momentum or value bias | High factor exposure by design. Typical ARP fund looks to offer diversified exposrue to many risk-premia factors |
+| Liquidity                                                | Generally highly liquid                   | Generally highly liquid                                      | Generally highly liquid                                      | Generally highly liquid                                      | Generally highly liquid                                      |
+| Leverage                                                 | Can vary significantly: typically 3-8x    | Can vary significantly: typically 3-8x                       | Typical 2-4x (with MTE typically 10-30%)                     | Typical 2-4x (with MTE typically 15-40%)                     | Varied (typically 1.5 to 2.0x)                               |
+
 - Long Short Strategy
 - Trend Following Strategy
   - Momentum
 - Statistical Arbitrage Strategy
   - Pairs Trading
 - Volatility Trading
-- Event-Driven Strategies
 
 ### Capital Allocation
 
@@ -30,7 +52,7 @@ This is a Quant portfolio strategy.
 
 [Beginner's Guide to Quantitative Trading | QuantStart](https://www.quantstart.com/articles/Beginners-Guide-to-Quantitative-Trading/)
 
-[Quant hedge fund primer: demystifying quantitative strategies](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
+[Quant hedge fund primer: demystifying quantitative strategies | Aurum](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
 
 [WebClinic GitHub](https://github.com/webclinic017)
 
@@ -65,3 +87,5 @@ This is a Quant portfolio strategy.
 [Quantitative Trading - Overview, Components, How It Works | Wall Street Oasis](https://www.wallstreetoasis.com/resources/skills/trading-investing/quantitative-trading)
 
 [Quantitative Finance (arxiv.org)](https://arxiv.org/archive/q-fin)
+
+[An introduction to NMF and how it differs from PCA | Medium](https://medium.com/@354047384/an-introduction-to-nmf-and-how-it-differs-from-pca-3d8e4080df83)
