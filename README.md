@@ -1,4 +1,4 @@
-# fina4380-project
+# FINA4380 Project
 
 This is a Quant portfolio strategy.
 
@@ -10,14 +10,13 @@ This is a Quant portfolio strategy.
 - Relative Strength Index
 - Moving Average Convergence Divergence
 - Rate of Change
-- 
 
 ### Strategies
 
 - Mean-Reversion Strategy
 - Long Short Strategy
 - Trend Following Strategy
-  - Momentum 
+  - Momentum
 - Statistical Arbitrage Strategy
   - Pairs Trading
 - Volatility Trading
@@ -53,7 +52,7 @@ This is a Quant portfolio strategy.
 
 [Statistics & ML Concepts for Quant Finance](https://openquant.co/blog/statistics-and-ml-concepts-for-quant-finance-interview)
 
-[Hands-on machine learning for algorithmic trading : design and implement investment strategies based on smart algorithms that learn from data using Python: Chapter 4](https://julac-cuhk.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991039741106303407&context=L&vid=852JULAC_CUHK:CUHK&lang=en&search_scope=All&adaptor=Local Search Engine&tab=default_tab&query=any,contains, Machine Learning for Algorithmic Trading&sortby=rank)
+[Hands-on machine learning for algorithmic trading: design and implement investment strategies based on smart algorithms that learn from data using Python: Chapter 4](https://julac-cuhk.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991039741106303407&context=L&vid=852JULAC_CUHK:CUHK&lang=en&search_scope=All&adaptor=Local)
 
 [PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading | GitHub](https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading)
 
