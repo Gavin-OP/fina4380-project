@@ -2,8 +2,6 @@
 
 This is a Quant portfolio strategy.
 
-[TOC]
-
 ## Quant Strategy Identification
 
 ### Common Equity Quant Strategies
@@ -89,6 +87,10 @@ This is a Quant portfolio strategy.
 
 [Quantitative Trading - Overview, Components, How It Works | Wall Street Oasis](https://www.wallstreetoasis.com/resources/skills/trading-investing/quantitative-trading)
 
+[Quantitative Investing - What Is It, Strategies, Examples, Benefits | Wall Street Mojo](https://www.wallstreetmojo.com/quantitative-investing/)
+
+[Trading Quantitative Strategies Explained | Admirals](https://admiralmarkets.com/education/articles/automated-trading/trading-quantitative-strategies)
+
 ### Predictors, Signals, Strategies
 
 [SMA and EMA Crossover Strategy](https://forexop.com/strategy/sma-and-ema-crossover/)
@@ -109,7 +111,7 @@ This is a Quant portfolio strategy.
 
 [Quantitative Finance (arxiv.org)](https://arxiv.org/archive/q-fin)
 
-[BigQuant](https://bigquant.com/)
+[BigQuant Wiki](https://bigquant.com/wiki/home)
 
 [邢不行 | 量化小讲堂](https://www.quantclass.cn/home)
 
@@ -118,6 +120,22 @@ This is a Quant portfolio strategy.
 [OpenQuant Blog](https://openquant.co/blog)
 
 [Trading Code | Programming For Traders](https://www.tradingcode.net/)
+
+[SigTech User Guide](https://guide.sigtech.com/)
+
+[Industry insights and news for Quant | SigTech](https://sigtech.com/insights/)
+
+[Articles | QuantStart](https://www.quantstart.com/articles/)
+
+[Quantivity | Some Articles Before 2012](https://quantivity.wordpress.com/)
+
+[Elite Trader](https://www.elitetrader.com/et/)
+
+[Seeking Alpha](https://seekingalpha.com/)
+
+[QuantPedia](https://quantpedia.com/blog/)
+
+[Quant Investing Research Library | Savvy Investor](https://www.savvyinvestor.net/quant-and-tools/articles-and-white-papers)
 
 ### Techniques
 
