@@ -2,33 +2,45 @@
 
 This is a Quant portfolio strategy.
 
-## Common Equity Quant Strategies
+[TOC]
 
-### **Equity Statistical Arbitrage**
+## Quant Strategy Identification
+
+### Common Equity Quant Strategies
+
+#### **Equity Statistical Arbitrage**
 
 - Utilize price data and price-related (i.e. correlation, volatility) and market data (i.e. volume, order book) to determine the existence of patterns. 
 - Signal Types[^1]:
   - Mean Reversion: revert to an equilibrium (i.e. paired trading, duel class share arbitrage, volatility strategy, contrarian). 
   - Momentum: persistent price movements (i.e., trend).
 
-### **Quantitative Equity Market Neutral (QEMN)**
+#### **Quantitative Equity Market Neutral (QEMN)**
 
 - Utilize various data sources as predictors/metrics to generate signals and rank/score stocks in varying proportions by weighted signals. Buy certain proportions and short certain proportions. 
-- Procedures:
-  - Data Collection & Processing
-    - Fundamental data: financial (i.e. financial statement, cash flow, PE, PB, dividend), non-financial (i.e. industry trends, macroeconomic indicators).
-    - Technical data: (i.e. MA, RSI, volume).
-    - Sentiment data: event-driven (i.e. analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, insider buying/selling).
-    - Alternative data: non-traditional (i.e. satellite imagery, credit card data, weather patterns).
-  - Signal Generation: generate signals for each stock with data as predictors.  
-  - Signal Combination & Weighting: rank each stock against weighted signals. Machine learning can be used to process various scores. 
-    - Kelly criterion
-  - Portfolio Construction & Risk Management
-    - Efficient Frontier
-    - Stop Loss Order
-    - Position Size Limits
-    - Portfolio Factor Exposure Limits
-    - Liquidity Constraint
+
+- General Procedures:
+  
+  1. Data Collection & Processing
+  
+     - Fundamental data: financial (i.e. financial statement, cash flow, PE, PB, dividend, market cap), non-financial (i.e. industry trends, momentum, macroeconomic indicators, sector).
+  
+     - Technical data: (i.e. MA, RSI, volume, ROC, MACD, Bollinger Bands).
+  
+     - Sentiment data: event-driven (i.e. analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, insider buying/selling).
+  
+     - Alternative data: non-traditional (i.e. satellite imagery, credit card data, weather patterns, geography), mimicking (i.e. Barra risk factor).
+  
+  2. Signal Generation: generate signals for each stock with data as predictors.  
+  
+  3. Signal Combination & Weighting: rank each stock against weighted signals. Machine learning can be used to process various scores. 
+     - Kelly criterion
+  
+  4. Portfolio Construction
+  
+     - Efficient Frontier
+  
+     - Smart $\beta$
 
 | Summary[^2]                                                 | Statistical Arbitrage                     | QEMN                                                         |
 | ----------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
@@ -40,27 +52,29 @@ This is a Quant portfolio strategy.
 | Liquidity                                                   | Generally highly liquid                   | Generally highly liquid                                      |
 | Leverage                                                    | Can vary significantly: typically 3-8x    | Can vary significantly: typically 3-8x                       |
 
-## Common Multi-Asset Class Quant Strategy[^2]
+### Common Multi-Asset Class Quant Strategy[^2]
 
 - **Managed futures/Commodity trading advisors ("CTAs")/Global macro**
 - **Quant macro and global asset allocation ("GAA")** 
 - **Alternative risk premia**
 
-## Trading Strategy Design
+## Strategy Backtesting
 
-### Predictors
+- Sharpe ratio
 
-- Bollinger Bands
-- Relative Strength Index
-- Moving Average Convergence Divergence
-- Rate of Change
-- Risk Factors
-- Value
-- Growth
-- Market Cap
-- Sector
-- Momentum
-- Geography
+## Risk Management
+
+- Stop Loss Order
+- Position Size Limits
+- Portfolio Factor Exposure Limits
+- Liquidity Constraint
+- Drawdown
+- Percentage of Profitable Trades
+
+## To Do
+
+- latency arbitrage
+- index arbitrage
 
 ## References
 
