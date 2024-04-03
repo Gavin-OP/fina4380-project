@@ -27,12 +27,12 @@ This is a Quant portfolio strategy.
     - Momentum: price movements will be more persistent (i.e., trend).
     - Event-driven: analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, and corporate insider buying/selling.
 - **Quantitative equity market neutral**
-  - take fundamental and/or event-oriented data, such as balance sheet information and cash flow statement statistics, and systematically rank/score stocks against these metrics in varying proportions. The weights of the scores of the different fundamental data sources may be fixed or dynamic.
+  - take fundamental and/or event-oriented data, such as balance sheet information and cash flow statement statistics, and systematically rank/score stocks against these metrics in varying proportions. The weights of the scores of the different fundamental data sources may be fixed or dynamic. Use machine learning algorithms to analyze and process various signals. 
   - Signal types:
     - Fundamental data: financial data such as earnings, revenue, profit margins, and cash flow, as well as non-financial data such as industry trends and macroeconomic indicators.
     - Technical data: past market trends and patterns, such as moving averages, relative strength, and trading volume.
     - Sentiment data: investor sentiment and market sentiment, such as news articles, social media posts, and analyst reports.
-    - Alternative data: non-traditional data sources, such as satellite imagery, credit card data, and weather patterns, which can provide insight into market trends and consumer behaviour.
+    - Alternative data: non-traditional data sources, such as satellite imagery, credit card data, and weather patterns, which can provide insight into market trends and consumer behavior.
 
 - **Managed futures/CTAs**
 - **Quant macro**
