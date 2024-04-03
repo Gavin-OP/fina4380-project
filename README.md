@@ -61,6 +61,7 @@ This is a Quant portfolio strategy.
 ## Strategy Backtesting
 
 - Sharpe ratio
+- BackTrader
 
 ## Risk Management
 
@@ -79,11 +80,15 @@ This is a Quant portfolio strategy.
 
 ## References
 
+### Overview
+
 [Beginner's Guide to Quantitative Trading | QuantStart](https://www.quantstart.com/articles/Beginners-Guide-to-Quantitative-Trading/)
 
 [Quant hedge fund primer: demystifying quantitative strategies | Aurum](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
 
 [Quantitative Trading - Overview, Components, How It Works | Wall Street Oasis](https://www.wallstreetoasis.com/resources/skills/trading-investing/quantitative-trading)
+
+### Predictors, Signals, Strategies
 
 [SMA and EMA Crossover Strategy](https://forexop.com/strategy/sma-and-ema-crossover/)
 
@@ -96,6 +101,8 @@ This is a Quant portfolio strategy.
 [Trading strategies | Quantified Strategies](https://www.quantifiedstrategies.com/category/trading-strategies/)
 
 [Trading indicators | Quantified Strategies](https://www.quantifiedstrategies.com/category/trading-indicators/)
+
+### Platforms
 
 [WebClinic GitHub](https://github.com/webclinic017)
 
@@ -110,6 +117,8 @@ This is a Quant portfolio strategy.
 [OpenQuant Blog](https://openquant.co/blog)
 
 [Trading Code | Programming For Traders](https://www.tradingcode.net/)
+
+### Techniques 
 
 [An introduction to NMF and how it differs from PCA | Medium](https://medium.com/@354047384/an-introduction-to-nmf-and-how-it-differs-from-pca-3d8e4080df83)
 
