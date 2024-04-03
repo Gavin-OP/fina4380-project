@@ -2,50 +2,49 @@
 
 This is a Quant portfolio strategy.
 
-## Common Quant Strategies
+## Common Equity Quant Strategies
 
-- **Equity statistical arbitrage**
-  - utilize price data and its derivatives, such as correlation, volatility, and other forms of market data, such as volume and order-book information to determine the existence of patterns. 
-  - Signal types[^1]:
-    - Mean-reversion: revert to an equilibrium level (i.e. Paired trading, volatility strategy). 
-    - Momentum: price movements will be more persistent (i.e., trend).
-    - Event-driven: analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, and corporate insider buying/selling.
-- **Quantitative equity market neutral**[^2]
-  - take fundamental and/or event-oriented data, such as balance sheet information and cash flow statement statistics, and systematically rank/score stocks against these metrics in varying proportions. The weights of the scores of the different fundamental data sources may be fixed or dynamic. Use machine learning algorithms to analyze and process various signals. 
-  - Signal types:
-    - Fundamental data: financial data such as earnings, revenue, profit margins, and cash flow, as well as non-financial data such as industry trends and macroeconomic indicators.
-    - Technical data: past market trends and patterns, such as moving averages, relative strength, and trading volume.
-    - Sentiment data: investor sentiment and market sentiment, such as news articles, social media posts, and analyst reports.
-    - Alternative data: non-traditional data sources, such as satellite imagery, credit card data, and weather patterns, which can provide insight into market trends and consumer behavior.
+### **Equity Statistical Arbitrage**
 
-  - Procedures:
-    - Data collection and processing
-    - Signal generation
-    - Signal combination and weighting
-      - Kelly criterion
-      - Efficient frontier
+- Utilize price data and price-related (i.e. correlation, volatility) and market data (i.e. volume, order book) to determine the existence of patterns. 
+- Signal Types[^1]:
+  - Mean Reversion: revert to an equilibrium (i.e. paired trading, duel class share arbitrage, volatility strategy, contrarian). 
+  - Momentum: persistent price movements (i.e., trend).
 
-    - Portfolio construction and risk management
-      - Stop loss order
-      - Position size limits
-      - Portfolio factor exposure limits
-      - Liquidity constraint
+### **Quantitative Equity Market Neutral (QEMN)**
 
-- **Managed futures/CTAs**
-- **Quant macro**
+- Utilize various data sources as predictors/metrics to generate signals and rank/score stocks in varying proportions by weighted signals. Buy certain proportions and short certain proportions. 
+- Procedures:
+  - Data Collection & Processing
+    - Fundamental data: financial (i.e. financial statement, cash flow, PE, PB, dividend), non-financial (i.e. industry trends, macroeconomic indicators).
+    - Technical data: (i.e. MA, RSI, volume).
+    - Sentiment data: event-driven (i.e. analyst earnings estimates, NLP, announced mergers, share buy-backs, index rebalancing, insider buying/selling).
+    - Alternative data: non-traditional (i.e. satellite imagery, credit card data, weather patterns).
+  - Signal Generation: generate signals for each stock with data as predictors.  
+  - Signal Combination & Weighting: rank each stock against weighted signals. Machine learning can be used to process various scores. 
+    - Kelly criterion
+  - Portfolio Construction & Risk Management
+    - Efficient Frontier
+    - Stop Loss Order
+    - Position Size Limits
+    - Portfolio Factor Exposure Limits
+    - Liquidity Constraint
+
+| Summary[^2]                                                 | Statistical Arbitrage                     | QEMN                                                         |
+| ----------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| Typical Market Directionality                               | Primarily Market Neutral                  | Primarily Market Neutral                                     |
+| Observed $\beta$ to Traditional Assets (Equities and Bonds) | Typically Very Low                        | Typically Very Low                                           |
+| Long/short bias                                             | None                                      | None                                                         |
+| Historical volatility                                       | Lower volatility than typical HF universe | Lower volatility than typical HF universe                    |
+| Typical factor exposure                                     | Tightly hedged to generic factors         | May be hedged to genetic factors, but tends to take specific exposure to certain equity risk premia |
+| Liquidity                                                   | Generally highly liquid                   | Generally highly liquid                                      |
+| Leverage                                                    | Can vary significantly: typically 3-8x    | Can vary significantly: typically 3-8x                       |
+
+## Common Multi-Asset Class Quant Strategy[^2]
+
+- **Managed futures/Commodity trading advisors ("CTAs")/Global macro**
+- **Quant macro and global asset allocation ("GAA")** 
 - **Alternative risk premia**
-- **Quant volatility**
-
-| Risk Return Summary                                      | Statistical arbitrage                     | QEMN                                                                                                | CTAs                                                                                       | Quant macro/GAA                                                                            | Alternative risk premia                                                                                          |
-| -------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| Typical assets traded                                    | Equities                                  | Equities                                                                                            | Liquid futures – equity, fixed income, commodities.                                        | Similar to CTAs + cash instruments, bonds, FX, ETFs, Derivatives                           | Primarily equities, but may also trade some derivatives and instruments similar to quant macro                   |
-| Typical market directionality /neutrality                | Primarily market neutral                  | Primarily market neutral                                                                            | Generally directional                                                                      | Generally relative value. Some have directional positions                                  | Generally market neutral long-term (some exceptions)                                                             |
-| Observed beta to traditional assets (equities and bonds) | Typically very low                        | Typically very low                                                                                  | Typically low                                                                              | Typically low                                                                              | Typically low to moderate                                                                                        |
-| Long/short bias                                          | None                                      | None                                                                                                | May be directional but should have no systemic bias to be long or short over the long-term | May be directional but should have no systemic bias to be long or short over the long-term | Typically no bias                                                                                                |
-| Historical volatility                                    | Lower volatility than typical HF universe | Lower volatility than typical HF universe                                                           | Higher volatility than wider HF universe                                                   | Higher volatility than wider HF universe                                                   | Potential exposure to large factor moves – can be large/long drawdowns                                           |
-| Typical factor exposure                                  | Tightly hedged to generic factors         | May be hedged to generic factors, but tends to take specific exposure to certain equity risk premia | Typically highly exposed to momentum                                                       | Varied, may be tightly hedged; could have a momentum or value bias                         | High factor exposure by design. Typical ARP fund looks to offer diversified exposure to many risk-premia factors |
-| Liquidity                                                | Generally highly liquid                   | Generally highly liquid                                                                             | Generally highly liquid                                                                    | Generally highly liquid                                                                    | Generally highly liquid                                                                                          |
-| Leverage                                                 | Can vary significantly: typically 3-8x    | Can vary significantly: typically 3-8x                                                              | Typical 2-4x (with MTE typically 10-30%)                                                   | Typical 2-4x (with MTE typically 15-40%)                                                   | Varied (typically 1.5 to 2.0x)                                                                                   |
 
 ## Trading Strategy Design
 
@@ -105,5 +104,7 @@ This is a Quant portfolio strategy.
 
 [An introduction to NMF and how it differs from PCA | Medium](https://medium.com/@354047384/an-introduction-to-nmf-and-how-it-differs-from-pca-3d8e4080df83)
 
+[The Inner Workings of a Quant Contrarian Strategy | Morningstar](https://www.morningstar.com/articles/650328/the-inner-workings-of-a-quant-contrarian-strategy)
+
 [^1]: Signals in the context of quant hedge funds refer to mathematical models and algorithms that analyse large volumes of financial data to identify patterns and trends. These signals are used to make investment decisions and execute trades.
-[^2]: Long Short Strategy
+[^2]: Retrieved from [Quant hedge fund primer: demystifying quantitative strategies | Aurum](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
