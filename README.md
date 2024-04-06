@@ -80,6 +80,10 @@ This is a Quant portfolio strategy.
 
 [Trading indicators | Quantified Strategies](https://www.quantifiedstrategies.com/category/trading-indicators/)
 
+[Constructing a Machine Learning Model](https://medium.datadriveninvestor.com/introduction-to-quantitative-trading-constructing-a-machine-learning-model-9165f2d986de)
+
+[Pairs-Trading](https://medium.datadriveninvestor.com/citadels-strategy-anyone-can-use-pairs-trading-7b81428a6c67)
+
 ### Platforms
 
 [WebClinic GitHub](https://github.com/webclinic017)
@@ -123,6 +127,12 @@ This is a Quant portfolio strategy.
 [PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading | GitHub](https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading)
 
 [Stock price prediction based on PCA-LSTM model](https://dl.acm.org/doi/abs/10.1145/3545839.3545852)
+
+### Books
+
+[Multi-Factor Models and Signal Processing Techniques : Application to Quantitative Finance](https://www.proquest.com/docview/2131273191/$N?accountid=10371&sourcetype=Books)
+
+
 
 [^1]: Signals in the context of quant hedge funds refer to mathematical models and algorithms that analyse large volumes of financial data to identify patterns and trends. These signals are used to make investment decisions and execute trades.
 [^2]: Retrieved from [Quant hedge fund primer: demystifying quantitative strategies | Aurum](https://www.aurum.com/insight/thought-piece/quant-hedge-fund-strategies-explained/)
