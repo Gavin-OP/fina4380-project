@@ -86,6 +86,8 @@ This is a Quant portfolio strategy.
 
 [Momentum and Reversion Trading Signals Analysis| Medium](https://medium.com/call-for-atlas/momentum-and-reversion-the-poor-mans-trading-strategies-9b8e1e6d3496)
 
+[Deep Q-Learning Applied to Algorithmic Trading | Medium](https://medium.com/call-for-atlas/deep-q-learning-applied-to-algorithmic-f89bfafa584d)
+
 ### Platforms
 
 [WebClinic GitHub](https://github.com/webclinic017)
