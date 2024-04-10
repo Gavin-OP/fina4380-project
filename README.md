@@ -84,6 +84,8 @@ This is a Quant portfolio strategy.
 
 [Pairs-Trading](https://medium.datadriveninvestor.com/citadels-strategy-anyone-can-use-pairs-trading-7b81428a6c67)
 
+[Momentum and Reversion Trading Signals Analysis| Medium](https://medium.com/call-for-atlas/momentum-and-reversion-the-poor-mans-trading-strategies-9b8e1e6d3496)
+
 ### Platforms
 
 [WebClinic GitHub](https://github.com/webclinic017)
