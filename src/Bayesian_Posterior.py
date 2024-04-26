@@ -78,7 +78,7 @@ class Bayesian_Posteriors:
             Lambda_n += (f_t - f_bar) @ (f_t - f_bar).T
         return Lambda_n / (self.T - self.K - 2)
 
-    def posterior_predictive(self):
+    def posterior_predictive(self) -> tuple[np.ndarray, np.ndarray, float]:
         sig2_mean = self.post_sig2_mean()
         miu_f_mean, miu_f_var = self.post_miu_f()
         Lambda_n_mean = self.post_Lambda_n()
@@ -98,4 +98,4 @@ class Bayesian_Posteriors:
                 else:
                     r_cov_mat[i, j] = beta_mean_list[i, :] @ f_var @ beta_mean_list[j, :].T
                     r_cov_mat[j, i] = r_cov_mat[i, j]
-        return r_mean_list, r_cov_mat, self.g_star
+        return np.array(r_mean_list), np.array(r_cov_mat), self.g_star
