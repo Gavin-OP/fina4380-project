@@ -8,7 +8,8 @@
     "**/Thumbs.db": true,
     "**/.*": true,
     "__pycache__": true,
-    "**/__pycache__": true
+    "**/__pycache__": true,
+    "src/bloomberg_equity_data_retrieval.ipynb": true
   },
   "explorerExclude.backup": {}
 }
