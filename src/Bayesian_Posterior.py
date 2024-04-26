@@ -12,6 +12,7 @@ class Bayesian_Posteriors:
         self.M = stock_data.shape[1]
         self.explained_variance_ratio = explained_variance_ratio
         self.F = self.factor_data
+        # Integrate PCA approach
         # self.F = self.factor_data @ PCA(factor_data, explained_variance_ratio=self.explained_variance_ratio).eigenvectors
         self.K = self.F.shape[1]
         self.g_star = minimize(self.g_likelihood, 1).x[0]
@@ -78,6 +79,7 @@ class Bayesian_Posteriors:
             Lambda_n += (f_t - f_bar) @ (f_t - f_bar).T
         return Lambda_n / (self.T - self.K - 2)
 
+    # Posterior predictive return distribution (mean vector and covariance matrix) and shrinkage parameter g*
     def posterior_predictive(self) -> tuple[np.ndarray, np.ndarray, float]:
         sig2_mean = self.post_sig2_mean()
         miu_f_mean, miu_f_var = self.post_miu_f()

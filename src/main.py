@@ -1,29 +1,14 @@
+import os
 import numpy as np
 import pandas as pd
 from Factor_Prep import Factor_Data
 from Bayesian_Posterior import Bayesian_Posteriors
 from matplotlib import pyplot as plt
-import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 
-if __name__ == "__main__":
-    # Get stock returns
-    stock_data = pd.read_excel("data/S&P500 Daily Closing Price 2014-2024.xlsx")
-    stock_data.rename(columns={"Unnamed: 0": "Date"}, inplace=True)
-    stock_data = stock_data.replace(r"^\s*$", np.nan, regex=True).iloc[:2516, :]
-    stock_return = stock_data.set_index("Date").pct_change().iloc[1:, :].dropna(axis=1)
 
-    # Get factor data
-    factor_data = Factor_Data("data/10_Industry_Portfolios_Daily.csv", skiprows=9, nrows=25690).factor_data
-    common_index = stock_return.index.intersection(factor_data.index)
-    stock_return, factor_data = stock_return.loc[common_index, :], factor_data.loc[common_index, :]
-    print("Data loading and cleaning done.")
-
-    y = []
-    z = []
-    g = []
-    length = 2000
-    stock_slice = 10
+def plot_results(stock_return: pd.DataFrame, factor_data: pd.DataFrame, length: int, stock_slice: int):
+    y, z, g = [], [], []
     for i in range(length):
         time_period = (i, 252 + i)
         miu, cov_mat, g_star = Bayesian_Posteriors(
@@ -62,3 +47,20 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("img/result_compare.png")
     plt.show()
+
+
+if __name__ == "__main__":
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    # Get stock returns
+    stock_data = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
+    stock_data.rename(columns={"Unnamed: 0": "Date"}, inplace=True)
+    stock_data = stock_data.replace(r"^\s*$", np.nan, regex=True).iloc[:2516, :]
+    stock_return = stock_data.set_index("Date").pct_change().iloc[1:, :].dropna(axis=1)
+
+    # Get factor data and clean data
+    factor_data = Factor_Data(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.csv"), skiprows=9, nrows=25690).factor_data
+    common_index = stock_return.index.intersection(factor_data.index)
+    stock_return, factor_data = stock_return.loc[common_index, :], factor_data.loc[common_index, :]
+    print("Data loading and cleaning finished.")
+
+    plot_results(stock_return, factor_data, 2000, 10)

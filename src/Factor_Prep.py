@@ -43,6 +43,3 @@ class PCA:
         eigenvalues = eigenvalues[idx]
         eigenvectors = eigenvectors[:, idx]
         return eigenvalues, eigenvectors
-
-
-Factor_Data("data/10_Industry_Portfolios_Daily.csv", skiprows=9, nrows=25690)
