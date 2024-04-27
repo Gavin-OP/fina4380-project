@@ -7,21 +7,25 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 
 
-def plot_results(stock_return: pd.DataFrame, factor_data: pd.DataFrame, length: int, stock_slice: int, sample_size=251, rebalance_freq: int = 1):
+def plot_results(
+    stock_return: pd.DataFrame, factor_data: pd.DataFrame, stock_slice: int, length=None, sample_size=251, rebalance_freq: int = 1, jump: int = 0
+):
+    if not length:
+        length = (len(stock_return) - sample_size) // rebalance_freq
     y, z, g = [], [], []
-    for i in range(length):
+    for i in range(jump, length):
         time_period = (i * rebalance_freq, sample_size + i * rebalance_freq)
         miu, cov_mat, g_star = Bayesian_Posteriors(
             factor_data.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
         ).posterior_predictive()
-        miu_simple = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
-        cov_mat_simple = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
-        y.append(sum(abs(miu - miu_simple)))
-        z.append(sum(sum(abs(cov_mat - cov_mat_simple.values))))
+        miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
+        cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
+        y.append(sum(abs(miu - miu_sample)))
+        z.append(sum(sum(abs(cov_mat - cov_mat_sample.values))))
         g.append(g_star)
         print("Loop", i + 1, "done.")
 
-    x = pd.to_datetime(factor_data.index[sample_size : sample_size + length * rebalance_freq])
+    x = pd.to_datetime(factor_data.index[sample_size + jump : sample_size + length * rebalance_freq])
     plt.figure(figsize=(10, 8))
     plt.subplot(3, 1, 1)
     plt.plot(x, y)
@@ -63,4 +67,4 @@ if __name__ == "__main__":
     stock_return, factor_data = stock_return.loc[common_index, :], factor_data.loc[common_index, :]
     print("Data loading and cleaning finished.")
 
-    plot_results(stock_return, factor_data, 2000, 10)
+    plot_results(stock_return, factor_data, stock_slice=10)
