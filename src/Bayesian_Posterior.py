@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from Factor_Prep import Factor_Data, PCA
+from Factor_Prep import PCA
 from scipy.optimize import minimize
 
 
