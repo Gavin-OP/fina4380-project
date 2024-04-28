@@ -120,9 +120,9 @@ def return_compare(
 
     x = pd.to_datetime(factor_data.index[sample_size + start : sample_size + end * rebalance_freq])
     plt.figure(figsize=(10, 4))
-    plt.plot(x, np.cumsum(return_series), label="Bayesian")
-    plt.plot(x, np.cumsum(return_series_pca), label="Bayesian (PCA)")
-    plt.plot(x, np.cumsum(return_series_sample), label="Sample")
+    plt.plot(x, return_series, label="Bayesian")
+    plt.plot(x, return_series_pca, label="Bayesian (PCA)")
+    plt.plot(x, return_series_sample, label="Sample")
     plt.title("Cumulative Return", fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
