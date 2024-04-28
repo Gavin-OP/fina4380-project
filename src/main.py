@@ -112,6 +112,12 @@ def return_compare(
         return_series_sample.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_sample)
         print("Loop", i + 1, "done.")
 
+    # Calculate cumulative return
+    for i in range(1, len(return_series)):
+        return_series[i] = (1 + return_series[i - 1]) * (1 + return_series[i]) - 1
+        return_series_pca[i] = (1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
+        return_series_sample[i] = (1 + return_series_sample[i - 1]) * (1 + return_series_sample[i]) - 1
+
     x = pd.to_datetime(factor_data.index[sample_size + start : sample_size + end * rebalance_freq])
     plt.figure(figsize=(10, 4))
     plt.plot(x, np.cumsum(return_series), label="Bayesian")
