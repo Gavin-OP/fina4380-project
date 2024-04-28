@@ -123,5 +123,5 @@ if __name__ == "__main__":
     stock_return, factor_data = stock_return.loc[common_index, :], factor_data.loc[common_index, :]
     print("Data loading and cleaning finished.")
 
-    # plot_results(stock_return, factor_data, stock_slice=20)
-    return_compare(stock_return, factor_data, smartScheme="GMV", stock_slice=20)
+    # plot_results(stock_return, factor_data, stock_slice=10)
+    return_compare(stock_return, factor_data, smartScheme="GMV", stock_slice=5)
