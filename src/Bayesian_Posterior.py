@@ -2,15 +2,28 @@ import pandas as pd
 import numpy as np
 from Factor_Prep import PCA
 from scipy.optimize import minimize
+from typing import Literal
 
 
 class Bayesian_Posteriors:
-    def __init__(self, factor_data: pd.DataFrame, stock_data: pd.DataFrame, pca: bool = False, explained_variance_ratio: float = 0.9):
+    def __init__(
+        self,
+        factor_data: pd.DataFrame,
+        stock_data: pd.DataFrame,
+        pca: bool = False,
+        explained_variance_ratio: float = 0.9,
+        P: np.ndarray[np.ndarray] | Literal["absolute", "relative"] = None,
+        Q: np.ndarray = None,
+        c: float = None,
+    ):
         self.factor_data = factor_data.values
         self.stock_data = stock_data.values
         self.T = stock_data.shape[0]  # Number of time periods
         self.M = stock_data.shape[1]  # Number of stocks
         self.explained_variance_ratio = explained_variance_ratio
+        self.P = P
+        self.Q = Q
+        self.c = c
         if pca:
             # Integrate PCA approach
             self.F = self.factor_data @ PCA(factor_data, explained_variance_ratio=self.explained_variance_ratio).eigenvectors
@@ -70,13 +83,32 @@ class Bayesian_Posteriors:
 
     # Mean and var of miu_f
     def post_miu_f(self) -> tuple[np.ndarray, np.ndarray]:
-        f_bar = self.F.mean(axis=0)
+        f_bar = np.array(self.F.mean(axis=0)).T
         Lambda_n = np.zeros((self.K, self.K))
         for t in range(self.T):
             f_t = self.F[t, :]
             Lambda_n += np.outer(f_t - f_bar, f_t - f_bar)
-        miu_f_mean = f_bar
-        miu_f_var = 1 / (self.T - self.K - 2) * Lambda_n / self.T
+        # Without views about future factor returns
+        if self.P is None or self.Q is None:
+            miu_f_mean = f_bar
+            miu_f_var = 1 / (self.T - self.K - 2) * Lambda_n / self.T
+        # With views about future factor returns
+        else:
+            if self.P == "absolute":
+                self.P = np.eye(self.K)
+            elif self.P == "relative":
+                self.P = np.eye(self.K)
+                for i in range(self.K - 1):
+                    self.P[i, i + 1] = -1
+            if not self.c:
+                self.c = 1 / self.T
+            Sigma_n = Lambda_n / self.T / (self.T - self.K)
+            miu_f_mean = f_bar + 1 / (self.c + 1) * Sigma_n @ self.P.T @ np.linalg.inv(self.P @ Sigma_n @ self.P.T) @ (self.Q - self.P @ f_bar)
+            miu_f_var = (
+                (self.T - self.K)
+                / (self.T - self.K - 2)
+                * (Sigma_n - 1 / (self.c + 1) * Sigma_n @ self.P.T @ np.linalg.inv(self.P @ Sigma_n @ self.P.T) @ self.P @ Sigma_n)
+            )
         return miu_f_mean, miu_f_var
 
     # Mean of Lambda_n

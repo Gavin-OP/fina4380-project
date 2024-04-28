@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 from typing import Literal
 
 
-class WeightCalc:
+class Weight_Calc:
     def __init__(
         self,
         smartScheme: Literal["EW", "RP", "MDR", "GMV", "MSR"],
@@ -16,8 +16,8 @@ class WeightCalc:
         self.mu = predictive_mean
         self.covMat = predictive_covMat
         self.rf = rf
-        self.lbound = -0.2
-        self.ubound = 0.2
+        self.lbound = -1
+        self.ubound = 1
         self.tol = 1e-10
 
     def RP(self, w):
