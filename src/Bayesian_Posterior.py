@@ -8,25 +8,25 @@ from typing import Literal
 class Bayesian_Posteriors:
     def __init__(
         self,
-        factor_data: pd.DataFrame,
-        stock_data: pd.DataFrame,
+        factor_return: pd.DataFrame,
+        stock_return: pd.DataFrame,
         pca: bool = False,
         explained_variance_ratio: float = 0.9,
         P: np.ndarray[np.ndarray] | Literal["absolute", "relative"] = None,
         Q: np.ndarray = None,
         c: float = None,
     ):
-        self.factor_data = factor_data.values
-        self.stock_data = stock_data.values
-        self.T = stock_data.shape[0]  # Number of time periods
-        self.M = stock_data.shape[1]  # Number of stocks
+        self.factor_data = factor_return.values
+        self.stock_data = stock_return.values
+        self.T = stock_return.shape[0]  # Number of time periods
+        self.M = stock_return.shape[1]  # Number of stocks
         self.explained_variance_ratio = explained_variance_ratio
         self.P = P
         self.Q = Q
         self.c = c
         if pca:
             # Integrate PCA approach
-            self.F = self.factor_data @ PCA(factor_data, explained_variance_ratio=self.explained_variance_ratio).eigenvectors
+            self.F = self.factor_data @ PCA(factor_return, explained_variance_ratio=self.explained_variance_ratio).eigenvectors
         else:
             self.F = self.factor_data
         self.K = self.F.shape[1]  # Number of factors
@@ -101,7 +101,7 @@ class Bayesian_Posteriors:
                 for i in range(self.K - 1):
                     self.P[i, i + 1] = -1
             if not self.c:
-                self.c = 1 / self.T
+                self.c = np.sqrt(self.T)
             Sigma_n = Lambda_n / self.T / (self.T - self.K)
             miu_f_mean = f_bar + 1 / (self.c + 1) * Sigma_n @ self.P.T @ np.linalg.inv(self.P @ Sigma_n @ self.P.T) @ (self.Q - self.P @ f_bar)
             miu_f_var = (
