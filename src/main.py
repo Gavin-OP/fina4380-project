@@ -1,10 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
-from Factor_Prep import Factor_Data
 from Bayesian_Posterior import Bayesian_Posteriors
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker as mtick
 from Weight_Calc import Weight_Calc
 from typing import Literal
 from datetime import datetime, timedelta
@@ -21,8 +21,9 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
                 start = max(start, 0)
                 break
             except KeyError:
-                print(f"Data of start date {str(start_date.date())} is not available, adding one day.")
-                start_date = start_date + timedelta(days=1)
+                new_date = start_date + timedelta(days=1)
+                print(f"Data of start date {str(start_date.date())} is not available, adding one day ({str(new_date.date())}).")
+                start_date = new_date
     else:
         start = 0
     if end_date:
@@ -34,8 +35,9 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
                 end = min(end, len(stock_return) - sample_size)
                 break
             except KeyError:
-                print(f"Data of end date {str(end_date.date())} is not available, subtracting one day.")
-                end_date = end_date - timedelta(days=1)
+                new_date = end_date - timedelta(days=1)
+                print(f"Data of end date {str(end_date.date())} is not available, subtracting one day ({str(new_date.date())}).")
+                end_date = new_date
     else:
         end = len(stock_return) - sample_size
     return start, end
@@ -97,6 +99,7 @@ def return_compare(
     stock_data: pd.DataFrame,
     factor_return: pd.DataFrame,
     rf_data: pd.Series,
+    spx_return: pd.DataFrame,
     smart_scheme: Literal["EW", "RP", "MDR", "GMV", "MSR"],
     equal_weight: bool = False,
     mv_weight: bool = False,
@@ -180,6 +183,7 @@ def return_compare(
             return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
             return_series_mv[i] = (1 + return_series_mv[i - 1]) * (1 + return_series_mv[i]) - 1
+        spx_return.iloc[i] = (1 + spx_return.iloc[i - 1]) * (1 + spx_return.iloc[i]) - 1
 
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 4))
@@ -190,10 +194,13 @@ def return_compare(
         plt.plot(x, return_series_ew, label="Equal Weight")
     if mv_weight:
         plt.plot(x, return_series_mv, label="Market Value Weight")
+    plt.plot(x, spx_return.iloc[start:end], label="SPX")
+
     plt.title(f"Cumulative Return ({smart_scheme})", fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(100))
     plt.legend()
     plt.savefig(os.path.join("img", plot_name))
     plt.show()
@@ -255,38 +262,59 @@ def compare_efficient_fronter(
     plt.show()
 
 
+def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
+    if not start:
+        start = 0
+    if not end:
+        end = len(data)
+    data = data.rename(columns={data.columns[0]: "Date"})
+    data = data.replace(r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
+    return data
+
+
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(__file__))
     # Get risk free rates
     rf_data = pd.read_excel(os.path.join(base_dir, "data/Effective Federal Funds Rate 2014-2024.xlsx")).set_index("Date")
     rf_data = rf_data.apply(lambda x: x / 365 / 100, axis=1)
-    # Get stock universe returns
-    # stock_data = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
-    # Get selected stock returns
+
+    # Get S&P 500 Index price and returns
+    spx_data = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 04-24.xlsx"))
+    spx_data = data_cleaning(spx_data)
+    spx_return = spx_data.pct_change().dropna()
+
+    # Get stock universe price and return
+    stock_universe_data = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
+    stock_universe_data = data_cleaning(stock_universe_data)
+    stock_universe_return = stock_universe_data.pct_change().dropna()
+
+    # Get selected stock price and return
     stock_data = pd.read_excel(
         os.path.join(base_dir, "data/Selected Stock Daily Closing Price 2014-2024.xlsx"), sheet_name="Selected Stock 2014-2024"
     )
-    stock_data = stock_data.rename(columns={"Unnamed: 0": "Date"})
-    stock_data = stock_data.replace(r"^\s*$", np.nan, regex=True).iloc[:2516, :].set_index("Date").dropna(axis=1)
-    stock_return = stock_data.pct_change().iloc[1:, :]
+    stock_data = data_cleaning(stock_data)
+    stock_return = stock_data.pct_change().dropna()
 
     # Get factor data and clean data
-    factor_return = Factor_Data(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.csv"), skiprows=9, nrows=25690).factor_data
+    factor_return = pd.read_excel(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.xlsx"))
+    factor_return = data_cleaning(factor_return)
     common_index = stock_return.index.intersection(factor_return.index).intersection(rf_data.index)
-    stock_return, factor_return, stock_data, rf_data = (
+    stock_return, factor_return, stock_data, rf_data, spx_return = (
         stock_return.loc[common_index, :],
         factor_return.loc[common_index, :],
         stock_data.loc[common_index, :],
         rf_data.loc[common_index, :],
+        spx_return.loc[common_index, :],
     )
     print("Data loading and cleaning finished.")
 
     # tracking_diff(stock_return, factor_data, stock_slice=10)
     return_compare(
-        stock_return,
-        stock_data,
-        factor_return,
-        rf_data,
+        stock_return=stock_return,
+        stock_data=stock_data,
+        factor_return=factor_return,
+        rf_data=rf_data,
+        spx_return=spx_return,
         smart_scheme="MDR",
         plot_name="return_compare_selected_MDR.png",
         equal_weight=True,
