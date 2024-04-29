@@ -121,6 +121,7 @@ def return_compare(
     start, end = process_date(start_date, end_date, stock_return, sample_size)
     return_series, return_series_pca, return_series_sample = [], [], []
     return_series_ew, return_series_mv = [], []
+    spx_return_series = []
     with Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(complete_style="red bold", finished_style="green bold"),
@@ -180,6 +181,9 @@ def return_compare(
                 beta_mv = np.array(stock_data.iloc[time_period[1] - 1, ::stock_slice] / sum(stock_data.iloc[time_period[1] - 1, ::stock_slice]))
                 return_series_mv.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_mv)
 
+            # S&P 500 Index single day return
+            spx_return_series.append(spx_return.iloc[time_period[1]])
+
             print(str(stock_return.index[time_period[1]]), "finished.")
             progress.update(task, advance=1)
 
@@ -192,7 +196,7 @@ def return_compare(
             return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
             return_series_mv[i] = (1 + return_series_mv[i - 1]) * (1 + return_series_mv[i]) - 1
-        spx_return.iloc[i] = (1 + spx_return.iloc[i - 1]) * (1 + spx_return.iloc[i]) - 1
+        spx_return_series[i] = (1 + spx_return_series[i - 1]) * (1 + spx_return_series[i]) - 1
 
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 4))
@@ -203,13 +207,13 @@ def return_compare(
         plt.plot(x, return_series_ew, label="Equal Weight")
     if mv_weight:
         plt.plot(x, return_series_mv, label="Market Value Weight")
-    plt.plot(x, spx_return.iloc[start:end], label="SPX")
+    plt.plot(x, spx_return_series, label="SPX")
 
     plt.title(f"Cumulative Return ({smart_scheme})", fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.yaxis.set_major_formatter(mtick.PercentFormatter(100))
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
     plt.legend()
     plt.savefig(os.path.join("img", plot_name))
     plt.show()
@@ -317,17 +321,17 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
-    # return_compare(
-    #     stock_return=stock_return,
-    #     stock_data=stock_data,
-    #     factor_return=factor_return,
-    #     rf_data=rf_data,
-    #     spx_return=spx_return,
-    #     smart_scheme="MDR",
-    #     plot_name="return_compare_selected_MDR.png",
-    #     equal_weight=True,
-    #     mv_weight=False,
-    #     start_date="2020-01-01",
-    # )
+    # tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
+    return_compare(
+        stock_return=stock_return,
+        stock_data=stock_data,
+        factor_return=factor_return,
+        rf_data=rf_data,
+        spx_return=spx_return,
+        smart_scheme="MDR",
+        plot_name="return_compare_selected_MDR.png",
+        equal_weight=True,
+        mv_weight=False,
+        start_date="2020-01-01",
+    )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
