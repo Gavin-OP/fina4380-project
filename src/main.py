@@ -46,7 +46,7 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
 def tracking_diff(
     stock_return: pd.DataFrame,
     factor_return: pd.DataFrame,
-    plot_name: str = "diff_tracking.png",
+    plot_name: str = "tracking_diff.png",
     stock_slice: int = 1,
     start_date: datetime | str = None,
     end_date: datetime | str = None,
@@ -54,17 +54,26 @@ def tracking_diff(
 ):
     start, end = process_date(start_date, end_date, stock_return, sample_size)
     y, z, g = [], [], []
-    for i in range(start, end):
-        time_period = (i, sample_size + i)
-        miu, cov_mat, g_star = Bayesian_Posteriors(
-            factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
-        ).posterior_predictive()
-        miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
-        cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
-        y.append(sum(abs(miu - miu_sample)))
-        z.append(sum(sum(abs(cov_mat - cov_mat_sample.values))))
-        g.append(g_star)
-        print(str(stock_return.index[time_period[1]]), "finished.")
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(complete_style="red bold", finished_style="green bold"),
+        TaskProgressColumn("[blue bold]{task.percentage:>3.2f}%"),
+        TimeRemainingColumn(compact=True),
+        transient=True,
+    ) as progress:
+        task = progress.add_task("[red bold]Running", total=end - start)
+        for i in range(start, end):
+            time_period = (i, sample_size + i)
+            miu, cov_mat, g_star = Bayesian_Posteriors(
+                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
+            ).posterior_predictive()
+            miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
+            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
+            y.append(sum(abs(miu - miu_sample)))
+            z.append(sum(sum(abs(cov_mat - cov_mat_sample.values))))
+            g.append(g_star)
+            print(str(stock_return.index[time_period[1]]), "finished.")
+            progress.update(task, advance=1)
 
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 8))
@@ -308,17 +317,17 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    # tracking_diff(stock_return, factor_data, stock_slice=10)
-    return_compare(
-        stock_return=stock_return,
-        stock_data=stock_data,
-        factor_return=factor_return,
-        rf_data=rf_data,
-        spx_return=spx_return,
-        smart_scheme="MDR",
-        plot_name="return_compare_selected_MDR.png",
-        equal_weight=True,
-        mv_weight=False,
-        start_date="2020-01-01",
-    )
+    tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
+    # return_compare(
+    #     stock_return=stock_return,
+    #     stock_data=stock_data,
+    #     factor_return=factor_return,
+    #     rf_data=rf_data,
+    #     spx_return=spx_return,
+    #     smart_scheme="MDR",
+    #     plot_name="return_compare_selected_MDR.png",
+    #     equal_weight=True,
+    #     mv_weight=False,
+    #     start_date="2020-01-01",
+    # )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
