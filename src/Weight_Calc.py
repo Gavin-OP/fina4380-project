@@ -6,15 +6,17 @@ from typing import Literal
 class Weight_Calc:
     def __init__(
         self,
-        smartScheme: Literal["EW", "RP", "MDR", "GMV", "MSR"],
+        smartScheme: Literal["EW", "RP", "MDR", "GMV", "MSR", "SpecReturn"],
         predictive_mean: np.ndarray,
         predictive_covMat: np.ndarray[np.ndarray],
         rf: float = 0.05,
+        reuired_return: float = None,
     ):
         self.smartScheme = smartScheme
         self.mu = predictive_mean
         self.covMat = predictive_covMat
         self.rf = rf
+        self.required_return = reuired_return
         self.lbound = -1
         self.ubound = 1
         self.tol = 1e-10
@@ -49,8 +51,11 @@ class Weight_Calc:
         sharpe = (w.T @ mu - rf) / np.sqrt(w.T @ covMat @ w)
         return -sharpe  # to minimize take negative
 
-    def Constraint2(self, w):
+    def weight_constraint(self, w):
         return 1 - sum(w)
+
+    def return_constraint(self, w):
+        return self.required_return - w.T @ self.mu
 
     def retrieve_beta(self):
         K = self.covMat.shape[0]
@@ -64,11 +69,15 @@ class Weight_Calc:
                 objective = self.RP
             elif self.smartScheme == "MDR":
                 objective = self.DR
-            elif self.smartScheme == "GMV":
+            elif self.smartScheme == "GMV" or self.smartScheme == "SpecReturn":
                 objective = self.MV
             elif self.smartScheme == "MSR":
                 objective = self.SR
-            const = {"type": "eq", "fun": self.Constraint2}
+
+            if self.smartScheme == "SpecReturn":
+                const = [{"type": "eq", "fun": self.weight_constraint}, {"type": "eq", "fun": self.return_constraint}]
+            else:
+                const = {"type": "eq", "fun": self.weight_constraint}
             res = minimize(objective, x_0, method="SLSQP", bounds=bounds, tol=self.tol, constraints=const)
             Beta = res.x
         return Beta

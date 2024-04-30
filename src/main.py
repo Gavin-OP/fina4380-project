@@ -108,8 +108,9 @@ def return_compare(
     stock_data: pd.DataFrame,
     factor_return: pd.DataFrame,
     rf_data: pd.Series,
-    spx_return: pd.DataFrame,
-    smart_scheme: Literal["EW", "RP", "MDR", "GMV", "MSR"],
+    required_return: float,
+    smart_scheme: Literal["EW", "RP", "MDR", "GMV", "MSR", "SpecReturn"],
+    spx_return: pd.DataFrame = None,
     equal_weight: bool = False,
     mv_weight: bool = False,
     plot_name: str = "return_compare.png",
@@ -136,14 +137,14 @@ def return_compare(
             miu, cov_mat, _ = Bayesian_Posteriors(
                 factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
             ).posterior_predictive()
-            beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1]).retrieve_beta()
+            beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
             return_series.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta)
 
             # Parameters estimated via Bayesian approach (PCA)
             miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
                 factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice], pca=True
             ).posterior_predictive()
-            beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1]).retrieve_beta()
+            beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
             return_series_pca.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
@@ -167,7 +168,7 @@ def return_compare(
             # Parameters estimated via sample data
             miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
             cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
-            beta_sample = Weight_Calc(smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1]).retrieve_beta()
+            beta_sample = Weight_Calc(smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
             return_series_sample.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_sample)
 
             # Equal weight allocation
@@ -182,7 +183,8 @@ def return_compare(
                 return_series_mv.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_mv)
 
             # S&P 500 Index single day return
-            spx_return_series.append(spx_return.iloc[time_period[1]])
+            if spx_return is not None:
+                spx_return_series.append(spx_return.iloc[time_period[1]])
 
             print(str(stock_return.index[time_period[1]]), "finished.")
             progress.update(task, advance=1)
@@ -196,7 +198,8 @@ def return_compare(
             return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
             return_series_mv[i] = (1 + return_series_mv[i - 1]) * (1 + return_series_mv[i]) - 1
-        spx_return_series[i] = (1 + spx_return_series[i - 1]) * (1 + spx_return_series[i]) - 1
+        if spx_return is not None:
+            spx_return_series[i] = (1 + spx_return_series[i - 1]) * (1 + spx_return_series[i]) - 1
 
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 4))
@@ -207,12 +210,15 @@ def return_compare(
         plt.plot(x, return_series_ew, label="Equal Weight")
     if mv_weight:
         plt.plot(x, return_series_mv, label="Market Value Weight")
-    plt.plot(x, spx_return_series, label="SPX")
+    if spx_return is not None:
+        plt.plot(x, spx_return_series, label="SPX")
 
     plt.title(f"Cumulative Return ({smart_scheme})", fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.xaxis.set_minor_locator(mdates.MonthLocator())
+    ax.xaxis.set_minor_formatter(mdates.DateFormatter("%b"))
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
     plt.legend()
     plt.savefig(os.path.join("img", plot_name))
@@ -312,9 +318,11 @@ if __name__ == "__main__":
     factor_return = pd.read_excel(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.xlsx"))
     factor_return = data_cleaning(factor_return)
     common_index = stock_return.index.intersection(factor_return.index).intersection(rf_data.index)
-    stock_return, factor_return, stock_data, rf_data, spx_return = (
+    stock_universe_return, stock_return, factor_return, stock_universe_data, stock_data, rf_data, spx_return = (
+        stock_universe_return.loc[common_index, :],
         stock_return.loc[common_index, :],
         factor_return.loc[common_index, :],
+        stock_universe_data.loc[common_index, :],
         stock_data.loc[common_index, :],
         rf_data.loc[common_index, :],
         spx_return.loc[common_index, :],
@@ -327,9 +335,10 @@ if __name__ == "__main__":
         stock_data=stock_data,
         factor_return=factor_return,
         rf_data=rf_data,
+        smart_scheme="SpecReturn",
+        required_return=0.002,
         spx_return=spx_return,
-        smart_scheme="GMV",
-        plot_name="return_compare_selected_GMV.png",
+        plot_name="return_compare_selected_SpecReturn.png",
         equal_weight=True,
         mv_weight=False,
         start_date="2020-01-01",
