@@ -46,7 +46,7 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
 def tracking_diff(
     stock_return: pd.DataFrame,
     factor_return: pd.DataFrame,
-    plot_name: str = "tracking_diff.png",
+    plot_name: str = None,
     stock_slice: int = 1,
     start_date: datetime | str = None,
     end_date: datetime | str = None,
@@ -99,7 +99,8 @@ def tracking_diff(
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
     plt.tight_layout()
-    plt.savefig(os.path.join("img", plot_name))
+    if plot_name:
+        plt.savefig(os.path.join("img", plot_name))
     plt.show()
 
 
@@ -113,7 +114,7 @@ def return_compare(
     spx_return: pd.DataFrame = None,
     equal_weight: bool = False,
     mv_weight: bool = False,
-    plot_name: str = "return_compare.png",
+    plot_name: str = None,
     stock_slice: int = 1,
     start_date: str = None,
     end_date: str = None,
@@ -217,11 +218,12 @@ def return_compare(
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.xaxis.set_minor_locator(mdates.MonthLocator())
-    ax.xaxis.set_minor_formatter(mdates.DateFormatter("%b"))
+    # ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[3, 6, 9]))
+    # ax.xaxis.set_minor_formatter(mdates.DateFormatter("%b"))
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
     plt.legend()
-    plt.savefig(os.path.join("img", plot_name))
+    if plot_name:
+        plt.savefig(os.path.join("img", plot_name))
     plt.show()
 
 
