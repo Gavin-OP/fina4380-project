@@ -48,7 +48,7 @@ class Bayesian_Posteriors:
             sig2_list.append(SSR / 2 / (self.T / 2 - 1))
         return sig2_list
 
-    # List of mean and var of beta_m
+    # List of Mean and Var of beta_m
     def post_beta(self, beta_0=None, g=None) -> tuple[list[np.ndarray], list[np.ndarray]]:
         if not beta_0:
             beta_0 = np.zeros(self.K)
@@ -81,7 +81,7 @@ class Bayesian_Posteriors:
         R_squared_list = np.array(R_squared_list)
         return sum(-(self.T - self.K - 1) / 2 * np.log(1 + g) + (self.T - 1) / 2 * np.log(1 + g * (1 - R_squared_list)))
 
-    # Mean and var of miu_f
+    # Mean and Var of miu_f
     def post_miu_f(self) -> tuple[np.ndarray, np.ndarray]:
         f_bar = np.array(self.F.mean(axis=0)).T
         Lambda_n = np.zeros((self.K, self.K))

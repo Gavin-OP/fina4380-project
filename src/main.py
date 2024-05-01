@@ -77,7 +77,11 @@ def tracking_diff(
             miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
             cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
             y.append(sum(abs(miu - miu_sample)))
-            z.append(sum(sum(abs(cov_mat - cov_mat_sample.values))))
+            cov_diff = 0
+            for m in range(cov_mat.shape[1]):
+                for j in range(m, cov_mat.shape[1]):
+                    cov_diff += abs(cov_mat[m, j] - cov_mat_sample.values[m, j])
+            z.append(cov_diff)
             g.append(g_star)
             print(str(stock_return.index[time_period[1]]), "finished.")
             progress.update(task, advance=1)
@@ -118,6 +122,7 @@ def return_compare(
     rf_data: pd.Series,
     required_return: float,
     smart_scheme: Literal["EW", "RP", "MDR", "GMV", "MSR", "SpecReturn"],
+    boundary: tuple[float, float] = (-1, 1),
     spx_return: pd.DataFrame = None,
     equal_weight: bool = False,
     mv_weight: bool = False,
@@ -126,10 +131,12 @@ def return_compare(
     start_date: str = None,
     end_date: str = None,
     sample_size: int = 251,
-    rebalance_method: bool = False,
+    ticker_df: pd.DataFrame = None,
 ):
     stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
+    stock_univ_data, stock_univ_return = stock_data, stock_return
     start, end = process_date(start_date, end_date, stock_return, sample_size)
+
     return_series, return_series_pca, return_series_sample = [], [], []
     return_series_ew, return_series_mv = [], []
     spx_return_series = []
@@ -143,18 +150,24 @@ def return_compare(
         task = progress.add_task("[red bold]Running", total=end - start)
         for i in range(start, end):
             time_period = (i, sample_size + i)
+
+            # Monthly rebalance for stock universe
+            if ticker_df is not None:
+                current_month = str(stock_return.index[time_period[1]]).rsplit("-", 1)[0]
+                stock_data, stock_return = stock_switch(ticker_df, current_month, stock_univ_data, stock_univ_return)
+
             # Parameters estimated via Bayesian approach (Non-PCA)
             miu, cov_mat, _ = Bayesian_Posteriors(
                 factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :]
             ).posterior_predictive()
-            beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
+            beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
             return_series.append(stock_return.iloc[time_period[1], :] @ beta)
 
             # Parameters estimated via Bayesian approach (PCA)
             miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
                 factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
             ).posterior_predictive()
-            beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
+            beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
             return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
@@ -178,7 +191,9 @@ def return_compare(
             # Parameters estimated via sample data
             miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
             cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
-            beta_sample = Weight_Calc(smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
+            beta_sample = Weight_Calc(
+                smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return, boundary
+            ).retrieve_beta()
             return_series_sample.append(stock_return.iloc[time_period[1], :] @ beta_sample)
 
             # Equal weight allocation
@@ -318,7 +333,7 @@ if __name__ == "__main__":
     rf_data = rf_data.apply(lambda x: x / 365 / 100, axis=1)
 
     # Get S&P 500 Index price and returns
-    spx_data = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 04-24.xlsx"))
+    spx_data = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 14-24.xlsx"))
     spx_data = data_cleaning(spx_data)
     spx_return = spx_data.pct_change().dropna()
 
@@ -333,6 +348,10 @@ if __name__ == "__main__":
     )
     stock_data = data_cleaning(stock_data)
     stock_return = stock_data.pct_change().dropna()
+
+    # Get rebalance ticker data
+    ticker_df = pd.read_excel(os.path.join(base_dir, "data/Dual Momentum Stock Selection.xlsx"), sheet_name="Long_list")
+    ticker_df = data_cleaning(ticker_df)
 
     # Get factor data and clean data
     factor_return = pd.read_excel(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.xlsx"))
@@ -349,18 +368,21 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
-    # return_compare(
-    #     stock_return=stock_return,
-    #     stock_data=stock_data,
-    #     factor_return=factor_return,
-    #     rf_data=rf_data,
-    #     smart_scheme="SpecReturn",
-    #     required_return=0.002,
-    #     spx_return=spx_return,
-    #     plot_name="return_compare_selected_SpecReturn.png",
-    #     equal_weight=True,
-    #     mv_weight=False,
-    #     start_date="2020-01-01",
-    # )
+    # tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
+    return_compare(
+        stock_return=stock_universe_return,
+        stock_data=stock_universe_data,
+        factor_return=factor_return,
+        rf_data=rf_data,
+        smart_scheme="MDR",
+        boundary=(0, 1),
+        required_return=0.0025,
+        spx_return=spx_return,
+        plot_name="return_compare_selected_MDR_rebalance.png",
+        equal_weight=True,
+        mv_weight=False,
+        start_date="2020-01-01",
+        end_date="2022-12-31",
+        ticker_df=ticker_df,
+    )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
