@@ -46,12 +46,14 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
 def tracking_diff(
     stock_return: pd.DataFrame,
     factor_return: pd.DataFrame,
+    pca: bool = False,
     plot_name: str = None,
     stock_slice: int = 1,
     start_date: datetime | str = None,
     end_date: datetime | str = None,
     sample_size=251,
 ):
+    stock_return = stock_return.iloc[:, ::stock_slice]
     start, end = process_date(start_date, end_date, stock_return, sample_size)
     y, z, g = [], [], []
     with Progress(
@@ -64,11 +66,16 @@ def tracking_diff(
         task = progress.add_task("[red bold]Running", total=end - start)
         for i in range(start, end):
             time_period = (i, sample_size + i)
-            miu, cov_mat, g_star = Bayesian_Posteriors(
-                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
-            ).posterior_predictive()
-            miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
-            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
+            if pca:
+                miu, cov_mat, g_star = Bayesian_Posteriors(
+                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
+                ).posterior_predictive()
+            else:
+                miu, cov_mat, g_star = Bayesian_Posteriors(
+                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :]
+                ).posterior_predictive()
+            miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
+            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
             y.append(sum(abs(miu - miu_sample)))
             z.append(sum(sum(abs(cov_mat - cov_mat_sample.values))))
             g.append(g_star)
@@ -118,8 +125,10 @@ def return_compare(
     stock_slice: int = 1,
     start_date: str = None,
     end_date: str = None,
-    sample_size=251,
+    sample_size: int = 251,
+    rebalance_method: bool = False,
 ):
+    stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
     start, end = process_date(start_date, end_date, stock_return, sample_size)
     return_series, return_series_pca, return_series_sample = [], [], []
     return_series_ew, return_series_mv = [], []
@@ -136,23 +145,23 @@ def return_compare(
             time_period = (i, sample_size + i)
             # Parameters estimated via Bayesian approach (Non-PCA)
             miu, cov_mat, _ = Bayesian_Posteriors(
-                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice]
+                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :]
             ).posterior_predictive()
             beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
-            return_series.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta)
+            return_series.append(stock_return.iloc[time_period[1], :] @ beta)
 
             # Parameters estimated via Bayesian approach (PCA)
             miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
-                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], ::stock_slice], pca=True
+                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
             ).posterior_predictive()
             beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
-            return_series_pca.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_pca)
+            return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
             # if i < end - 1:
             #     miu_view, cov_mat_view, _ = Bayesian_Posteriors(
             #         factor_data.iloc[time_period[0] : time_period[1], :],
-            #         stock_return.iloc[time_period[0] : time_period[1], ::stock_slice],
+            #         stock_return.iloc[time_period[0] : time_period[1], :],
             #         P="absolute",
             #         Q=np.array(factor_data.values[time_period[1], :]),
             #         rf_data.iloc[time_period[1] - 1],
@@ -160,28 +169,28 @@ def return_compare(
             # else:
             #     miu_view, cov_mat_view, _ = Bayesian_Posteriors(
             #         factor_data.iloc[time_period[0] : time_period[1], :],
-            #         stock_return.iloc[time_period[0] : time_period[1], ::stock_slice],
+            #         stock_return.iloc[time_period[0] : time_period[1], :],
             #         rf_data.iloc[time_period[1] - 1]
             #     ).posterior_predictive()
             # beta_view = WeightCalc(smartScheme, miu_view, cov_mat_view).retrieve_beta()
-            # return_series_view.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_view)
+            # return_series_view.append(stock_return.iloc[time_period[1], :] @ beta_view)
 
             # Parameters estimated via sample data
-            miu_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].mean()
-            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], ::stock_slice].cov()
+            miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
+            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
             beta_sample = Weight_Calc(smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return).retrieve_beta()
-            return_series_sample.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_sample)
+            return_series_sample.append(stock_return.iloc[time_period[1], :] @ beta_sample)
 
             # Equal weight allocation
             if equal_weight:
-                N = stock_return.iloc[time_period[1], ::stock_slice].shape[0]
+                N = stock_return.iloc[time_period[1], :].shape[0]
                 beta_ew = np.array([1 / N for _ in range(N)])
-                return_series_ew.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_ew)
+                return_series_ew.append(stock_return.iloc[time_period[1], :] @ beta_ew)
 
             # Market value weight allocation (questionable)
             if mv_weight:
-                beta_mv = np.array(stock_data.iloc[time_period[1] - 1, ::stock_slice] / sum(stock_data.iloc[time_period[1] - 1, ::stock_slice]))
-                return_series_mv.append(stock_return.iloc[time_period[1], ::stock_slice] @ beta_mv)
+                beta_mv = np.array(stock_data.iloc[time_period[1] - 1, :] / sum(stock_data.iloc[time_period[1] - 1, :]))
+                return_series_mv.append(stock_return.iloc[time_period[1], :] @ beta_mv)
 
             # S&P 500 Index single day return
             if spx_return is not None:
@@ -230,9 +239,10 @@ def return_compare(
 def compare_efficient_fronter(
     stock_return: pd.DataFrame, factor_return: pd.DataFrame, date: str | datetime, stock_slice: int = 1, sample_size: int = 251
 ) -> None:
+    stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
     date_index, _ = process_date(date, None, stock_return, sample_size)
     miu, cov_mat, _ = Bayesian_Posteriors(
-        factor_return.iloc[date_index : date_index + sample_size, :], stock_return.iloc[date_index : date_index + sample_size, ::stock_slice]
+        factor_return.iloc[date_index : date_index + sample_size, :], stock_return.iloc[date_index : date_index + sample_size, :]
     ).posterior_predictive()
 
     mu_p_list = np.arange(-1e-3, 1e-3, 1e-5)
@@ -260,8 +270,8 @@ def compare_efficient_fronter(
     plt.title("Efficient Frontier", fontsize=10)
 
     # Sample approach
-    R = stock_return.iloc[date_index : date_index + sample_size, ::stock_slice].mean()
-    Sigma = stock_return.iloc[date_index : date_index + sample_size, ::stock_slice].cov()
+    R = stock_return.iloc[date_index : date_index + sample_size, :].mean()
+    Sigma = stock_return.iloc[date_index : date_index + sample_size, :].cov()
     One = np.ones(len(R))
 
     A = R.T @ np.linalg.inv(Sigma) @ R
@@ -291,6 +301,14 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
     data = data.rename(columns={data.columns[0]: "Date"})
     data = data.replace(r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
     return data
+
+
+def stock_switch(ticker_df: pd.DataFrame, month: str, stock_data: pd.DataFrame, stock_return: pd.DataFrame):
+    date = month + "-01"
+    tickers = ticker_df.loc[date, :]
+    stock_data = stock_data.loc[:, tickers]
+    stock_return = stock_return.loc[:, tickers]
+    return stock_data, stock_return
 
 
 if __name__ == "__main__":
@@ -331,18 +349,18 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    # tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
-    return_compare(
-        stock_return=stock_return,
-        stock_data=stock_data,
-        factor_return=factor_return,
-        rf_data=rf_data,
-        smart_scheme="SpecReturn",
-        required_return=0.002,
-        spx_return=spx_return,
-        plot_name="return_compare_selected_SpecReturn.png",
-        equal_weight=True,
-        mv_weight=False,
-        start_date="2020-01-01",
-    )
+    tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
+    # return_compare(
+    #     stock_return=stock_return,
+    #     stock_data=stock_data,
+    #     factor_return=factor_return,
+    #     rf_data=rf_data,
+    #     smart_scheme="SpecReturn",
+    #     required_return=0.002,
+    #     spx_return=spx_return,
+    #     plot_name="return_compare_selected_SpecReturn.png",
+    #     equal_weight=True,
+    #     mv_weight=False,
+    #     start_date="2020-01-01",
+    # )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")

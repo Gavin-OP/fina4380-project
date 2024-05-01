@@ -11,15 +11,17 @@ class Weight_Calc:
         predictive_covMat: np.ndarray[np.ndarray],
         rf: float = 0.05,
         reuired_return: float = None,
+        boundary: tuple[float, float] = (-1, 1),
+        tol: float = 1e-10,
     ):
         self.smartScheme = smartScheme
         self.mu = predictive_mean
         self.covMat = predictive_covMat
         self.rf = rf
         self.required_return = reuired_return
-        self.lbound = -1
-        self.ubound = 1
-        self.tol = 1e-10
+        self.lbound = boundary[0]
+        self.ubound = boundary[1]
+        self.tol = tol
 
     def RP(self, w):
         w = np.array(w)
