@@ -2,7 +2,67 @@
 
 ## Introduction
 
+The primary objective of our project is to maximize the portfolio return by stock selection and allocation. To accomplish this, we have adopted a series of steps.
+
+Firstly, we employ the dual momentum method to select stocks and narrow down the list for portfolio construction. This method combines absolute and relative momentum to identify assets with strong performance potential.
+
+Secondly, we integrate Bayesian shrinkage and Smart Beta techniques on factors data to re-evaluate posterior predictive moments of stock returns. By incorporating the 10 industry factor model and implementation of monthly rebalancing via stock selection, we aim to boost the returns of the portfolio.
+
+Lastly, we utilize the backtrader framework for rigorous back-testing to thoroughly evaluate the performance of our strategy. This allows us to assess the historical effectiveness of our approach and make informed decisions on potential refinements.
+
 ## Stock Selection
+
+### Dual Momentum Implementation
+
+In our strategy, we implement a six-month formation period for stock selection. This means that we compute the returns of every asset in our stock universe, which comprises the S&P 500 index, over the past six months. This calculation is performed on a rolling basis, with monthly intervals, to ensure regular portfolio rebalancing.
+
+During each rebalancing period, we evaluate the six-month returns of all the assets and adjust the portfolio composition accordingly. Specifically, we select a subset of assets with the highest six-month returns to construct the portfolio. This approach allows us to capture and capitalize on the momentum effect exhibited by assets within the S&P 500 index.
+
+By incorporating this rolling six-month return calculation and frequent portfolio adjustments, our strategy aims to adapt to changing market conditions and exploit potential trends in the selected assets.
+
+```python
+clean_stock_price.to_excel("Cleaned SPX Price.xlsx")
+clean_stock_price.index = pd.to_datetime(clean_stock_price.index)
+clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=6).apply(
+    lambda x: (x[-1] - x[0]) / x[0]).dropna()
+clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in
+                                         clean_stock_semiannually_return.index]
+```
+
+### Determining the Stock List
+
+In our stock selection process, we create a long portfolio by sorting the top 50 stocks with the highest returns. However, it is essential to ensure that each stock in the long portfolio has a positive absolute return. If any stock has a negative return, it is removed from the portfolio.
+
+Similarly, we form a short portfolio by selecting the 50 stocks with the lowest returns and negative absolute returns. This ensures that we take advantage of downward price movements in these stocks.
+
+```python
+long_list_output = pd.DataFrame(columns=range(1, 51))
+short_list_output = pd.DataFrame(columns=range(1, 51))
+for i in range(clean_stock_semiannually_return.shape[0]):
+    semiannual_return = clean_stock_semiannually_return.iloc[i].values
+    sorted_indices = np.argsort(-semiannual_return)
+    sorted_semiannual_return = semiannual_return[sorted_indices]
+    sorted_company_names = company_names[sorted_indices]
+    positive_count = np.sum(sorted_semiannual_return > 0)
+    negative_count = np.sum(sorted_semiannual_return < 0)
+    positive_number = min(50, positive_count)
+    negative_number = min(50, negative_count)
+    array_shape = (50,)
+    positive_insert_array = np.resize(sorted_company_names[:positive_number], array_shape)
+    negative_insert_array = np.resize(sorted_company_names[-negative_number:], array_shape)
+    remaining_positive_columns = 50 - positive_number
+    remaining_negative_columns = 50 - negative_number
+    positive_insert_array[-remaining_positive_columns:] = ''
+    negative_insert_array[-remaining_negative_columns:] = ''
+    if remaining_positive_columns == 0:
+        long_list_output.loc[i] = sorted_company_names[:positive_number]
+    else:
+        long_list_output.loc[i] = positive_insert_array
+    if remaining_negative_columns == 0:
+        short_list_output.loc[i] = sorted_company_names[-negative_number:]
+    else:
+        short_list_output.loc[i] = negative_insert_array
+```
 
 ## Integration with Bayesian Shrinkage on Factors
 
