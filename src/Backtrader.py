@@ -177,7 +177,7 @@ if __name__ == '__main__':
         cerebro.adddata(data, name=col)
 
     # strategy setting
-    cerebro.broker.setcash(100000)
+    cerebro.broker.setcash(100000000)
     cerebro.broker.setcommission(commission=0.001)
     cerebro.broker.set_shortcash(True)
     cerebro.addstrategy(BLStrategy, weights=weights_df,
