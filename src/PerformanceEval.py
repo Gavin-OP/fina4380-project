@@ -11,11 +11,11 @@ if __name__ == "__main__":
     aum0 = 100000
     target_return = "002"
     sheet_name = "Bayesian"
-    comm_fee = "001"
+    comm = "001"
 
     # load returns and benchmark
     returns = pd.read_csv(
-        f"{dirname}/../output/returns_{target_return}_{comm_fee}_{sheet_name}.csv", index_col=0)
+        f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv", index_col=0)
     # f"{dirname}/../output/returns.csv", index_col=0)
     returns = returns.squeeze()
     returns.index = pd.to_datetime(returns.index, format='%Y-%m-%d')
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # quantstats report
     qs.reports.html(
-        returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm_fee}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return{target_return} Commission Fee{comm_fee} {sheet_name} Report')
+        returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return{target_return} Commission Fee{comm} {sheet_name} Report')
 
     # align the date of price and returns
     returns.index = returns.index.to_period('D')
@@ -62,5 +62,6 @@ if __name__ == "__main__":
     ax2.grid(axis='y', linestyle='--', alpha=0.6)
 
     plt.suptitle('Portfolio vs SPX', fontsize=20, y=0.95)
-    plt.savefig(f'{dirname}/../img/port_vs_spx.png')
+    plt.savefig(
+        f'{dirname}/../img/port_vs_spx_{target_return}_comm{comm}_{sheet_name}.png')
     plt.show()

@@ -151,7 +151,7 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
 
 if __name__ == "__main__":
     dirname = os.path.dirname(__file__)
-    target_return = "002"
+    target_return = "0025"
     sheet_name = "Bayesian"
     comm = "001"
     comm_fee = int(comm) / 1000
