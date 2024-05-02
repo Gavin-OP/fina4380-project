@@ -211,7 +211,7 @@ def return_compare(
             beta_sample = pd.DataFrame(
                 beta_sample.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]]
             )
-            result_beta_sample = pd.concat([result_beta_sample, beta]).fillna(0)
+            result_beta_sample = pd.concat([result_beta_sample, beta_sample]).fillna(0)
 
             # Equal weight allocation
             if equal_weight:
