@@ -8,7 +8,7 @@ Firstly, we employ the dual momentum method to select stocks and narrow down the
 
 Secondly, we integrate Bayesian shrinkage and Smart Beta techniques on factors data to re-evaluate posterior predictive moments of stock returns. By incorporating the 10 industry factor model and implementation of monthly rebalancing via stock selection, we aim to boost the returns of the portfolio.
 
-Lastly, we utilize the backtrader framework for rigorous back-testing to thoroughly evaluate the performance of our strategy. This allows us to assess the historical effectiveness of our approach and make informed decisions on potential refinements.
+Lastly, we utilize the `Backtrader` framework and `QuantStats` for rigorous back-testing to thoroughly evaluate the performance of our strategy. This allows us to assess the historical effectiveness of our approach and make informed decisions on potential refinements.
 
 ## Stock Selection
 
