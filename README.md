@@ -590,12 +590,33 @@ The backtesting results for three target daily returns indicated that a target d
 
 In addition to the drawdown and portfolio value, we also present the key performance metrics for the three target daily returns in the table below:
 
-| Metric                  | Value | Metric              | Value |
-| ----------------------- | ----- | ------------------- | ----- |
-| Cumulative Return       |       | Annualized Return   |       |
-| Annualized Volatility   |       | Sharpe Ratio        |       |
-| Sortino Ratio           |       | Maximum Drawdown    |       |
-| Calmar Ratio            |       | Value-at-Risk (VaR) |       |
-| Expected Shortfall (ES) |       |                     |       |
+| Metric              | Value  | Metric                  | Value   |
+| ------------------- | -----  | ----------------------- | -----   |
+| Target Daily Return | 0.015  | Cumulative Return       | 33.12%  |
+| Annualized Return   | 4.86%  | Annualized Volatility   | 26.53%  |
+| Sharpe Ratio        | 0.4    | Sortino Ratio           | 0.54    |
+| Calmar Ratio        | 0.1    | Maximum Drawdown        | -47.24% |
+| Value-at-Risk (VaR) | -2.71% | Expected Shortfall (ES) | -2.71%  |
 
 
+| Metric              | Value  | Metric                  | Value   |
+| ------------------- | -----  | ----------------------- | -----   |
+| Target Daily Return | 0.02   | Cumulative Return       | 74.62%  |
+| Annualized Return   | 9.68%  | Annualized Volatility   | 31.13%  |
+| Sharpe Ratio        | 0.59   | Sortino Ratio           | 0.83    |
+| Calmar Ratio        | 0.21   | Maximum Drawdown        | -46.16% |
+| Value-at-Risk (VaR) | -3.15% | Expected Shortfall (ES) | -3.15%  |
+
+
+| Metric              | Value  | Metric                  | Value   |
+| ------------------- | -----  | ----------------------- | -----   |
+| Target Daily Return | 0.025  | Cumulative Return       | 143.35% |
+| Annualized Return   | 15.89% | Annualized Volatility   | 36.69%  |
+| Sharpe Ratio        | 0.77   | Sortino Ratio           | 1.1     |
+| Calmar Ratio        | 0.3    | Maximum Drawdown        | -53.62% |
+| Value-at-Risk (VaR) | -3.69% | Expected Shortfall (ES) | -3.69%  |
+
+
+We also generate more comprehensive plot and tables for the backtesting results. The detailed report can be found in the following links[^5].
+
+[^5]: The detailed report for target daily return = 0.015% can be found [here](https://gavin-op.github.io/component/page/backtest_0015_comm001_Bayesian_report.html), for target daily return = 0.02% can be found [here](https://gavin-op.github.io/component/page/backtest_002_comm001_Bayesian_report.html), and for target daily return = 0.025% can be found [here](https://gavin-op.github.io/component/page/backtest_0025_comm001_Bayesian_report.html).
