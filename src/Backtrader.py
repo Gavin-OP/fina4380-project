@@ -156,6 +156,22 @@ if __name__ == '__main__':
         f'{dirname}/../data/synthetic_open_prices.csv', index_col='Date', parse_dates=True)
     weights_df = pd.read_csv(
         f'{dirname}/../data/synthetic_weights.csv', index_col='Date', parse_dates=True)
+
+    # close_prices_df = pd.read_csv(
+    #     f'{dirname}/../data/spx_close_2014_24.csv', index_col='Date', parse_dates=True)
+    # open_prices_df = pd.read_csv(
+    #     f'{dirname}/../data/spx_open_2014_24.csv', index_col='Date', parse_dates=True)
+    # weights_df = pd.read_csv(
+    #     f'{dirname}/../data/long_SpecReturn_002.csv', index_col='Date', parse_dates=True)
+
+    # close_prices_df = pd.read_excel(
+    #     f'{dirname}/../data/Selected Stock Daily Closing Price 2014-2024.xlsx', index_col=0, sheet_name="Selected Stock 2014-2024", parse_dates=True)
+    # open_prices_df = pd.read_excel(
+    #     f'{dirname}/../data/S&P 500 Trading Volume,  Open Price 14-24.xlsx', index_col=0, sheet_name="S&P 500 Opening Price 14-24", parse_dates=True)
+    # weights_df = pd.read_excel(
+    #     f'{dirname}/../output/long_SpecReturn_002.xlsx', index_col=0, sheet_name="Bayesian", parse_dates=True)
+    # print(close_prices_df.head())
+
     weights_df = weights_df / \
         weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
 
@@ -165,7 +181,17 @@ if __name__ == '__main__':
     combined_df = combined_df.dropna()
 
     # align the date of price and weights
-    weights_df = weights_df.loc[combined_df.index]
+    weights_df = weights_df.iloc[0:10, :]
+    # print(weights_df.head())
+    combined_df = combined_df.loc[weights_df.index]
+    # print(weights_df.head())
+    # print(combined_df.head())
+
+    # check wehter there are NA values in combined_df and weights_df in all columns
+    # print(combined_df.isna().sum().sum())
+    # print(weights_df.isna().sum().sum())
+    print(type(combined_df.iloc[0, 0]))
+    print(type(weights_df))
 
     # initialize cerebro engine
     cerebro = bt.Cerebro()
@@ -181,7 +207,7 @@ if __name__ == '__main__':
     cerebro.broker.setcommission(commission=0.001)
     cerebro.broker.set_shortcash(True)
     cerebro.addstrategy(BLStrategy, weights=weights_df,
-                        stocks=close_prices_df.columns, printnotify=False, printlog=False)
+                        stocks=close_prices_df.columns, printnotify=True, printlog=True)
 
     # analyze strategy
     cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
