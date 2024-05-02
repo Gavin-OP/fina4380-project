@@ -25,8 +25,7 @@ clean_stock_price.to_excel("Cleaned SPX Price.xlsx")
 clean_stock_price.index = pd.to_datetime(clean_stock_price.index)
 clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=6).apply(
     lambda x: (x[-1] - x[0]) / x[0]).dropna()
-clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in
-                                         clean_stock_semiannually_return.index]
+clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in clean_stock_semiannually_return.index]
 ```
 
 ### Determining the Stock List
@@ -318,14 +317,12 @@ However, when we adjust the required daily return to 0.2% or 0.25%, Bayesian app
 ![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_002.png)
 ![return_compare_long_SpecReturn_0025](img/return_compare_long_SpecReturn_0025.png)
 
-
 ## Backtesting
 
 In order to assess the performance of our portfolio relative to the benchmark SPX500, we employ backtesting techniques utilizing the `Backtrader`[^1] and `QuantStats`[^2] libraries. `Backtrader` stands as a widely-used Python library designed for backtesting trading strategies, while `QuantStats` serves as a complementary Python library tailored for comprehensive portfolio analytics. Through the integration of these tools, we aim to rigorously evaluate the performance of our strategy by using the generated portfolio weights in comparison to the SPX500 benchmark.
 
-[^1]: For detailed information on `Backtrader`, please visit: [`Backtrader` Documentation](https://www.backtrader.com/).  
-
-[^2]: The source code for `QuantStats` can be found at: [`QuantStats` GitHub Repository](https://github.com/ranaroussi/quntstats). 
+[^1]: For detailed information on `Backtrader`, please visit: [`Backtrader` Documentation](https://www.backtrader.com/).
+[^2]: The source code for `QuantStats` can be found at: [`QuantStats` GitHub Repository](https://github.com/ranaroussi/quntstats).
 
 The data utilized for backtesting purposes is sourced from **iFind**, encompassing the close price data for the SPX500 index, as well as the open and close prices for all individual stocks within the S&P 500 index. The portfolio weights, as previously mentioned, are generated through our strategy above.
 
@@ -337,17 +334,14 @@ In configuring `Backtrader`, the initial cash allocation is set at $100,000,000,
 
 Following the acquisition of daily returns, the subsequent analysis employs `QuantStats` to comprehensively evaluate portfolio performance. Key metrics, including cumulative return, annualized return, annualized volatility, Sharpe ratio, Sortino ratio, maximum drawdown, Calmar ratio, value-at-risk, and expected shortfall, are meticulously assessed. The significance of these metrics is encapsulated in the following table:
 
-
-
 | Metric                  | Value | Metric              | Value |
-|-------------------------|-------|---------------------|-------|
+| ----------------------- | ----- | ------------------- | ----- |
 | Cumulative Return       |       | Annualized Return   |       |
 | Annualized Volatility   |       | Sharpe Ratio        |       |
 | Sortino Ratio           |       | Maximum Drawdown    |       |
 | Calmar Ratio            |       | Value-at-Risk (VaR) |       |
 | Expected Shortfall (ES) |       |                     |       |
 
-  
 In addition to the quantitative analysis, visual representation further elucidates the performance dynamics of our portfolio. The cumulative return plot below illustrates the portfolio's performance trajectory over time.
 
 ![Cumulative Return Plot](./img/cumulative_return.png)
