@@ -1,4 +1,4 @@
-# A Comprehensive Approach to Construct a Portfolio: Factor Model, Bayesian Shrinkage and Smart Beta
+# A Comprehensive Approach to Construct a Portfolio: Factor Model, Bayesian Shrinkage, and Smart Beta
 
 ## Integration with Bayesian Shrinkage on Factors
 
