@@ -124,14 +124,17 @@ def return_compare(
     smart_scheme: Literal["EW", "RP", "MDR", "GMV", "MSR", "SpecReturn"],
     boundary: tuple[float, float] = (-1, 1),
     spx_return: pd.DataFrame = None,
+    pca: bool = False,
     equal_weight: bool = False,
     mv_weight: bool = False,
     plot_name: str = None,
+    weight_name: str = None,
     stock_slice: int = 1,
     start_date: str = None,
     end_date: str = None,
-    sample_size: int = 251,
+    sample_size: int = 252,
     ticker_df: pd.DataFrame = None,
+    short_only: bool = False,
 ):
     stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
     stock_univ_data, stock_univ_return = stock_data, stock_return
@@ -139,6 +142,7 @@ def return_compare(
 
     return_series, return_series_pca, return_series_sample = [], [], []
     return_series_ew, return_series_mv = [], []
+    result_beta, result_beta_sample = pd.DataFrame(columns=stock_univ_data.columns), pd.DataFrame(columns=stock_univ_data.columns)
     spx_return_series = []
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -162,13 +166,18 @@ def return_compare(
             ).posterior_predictive()
             beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
             return_series.append(stock_return.iloc[time_period[1], :] @ beta)
+            beta = pd.DataFrame(beta.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]])
+            result_beta = pd.concat([result_beta, beta]).fillna(0)
 
             # Parameters estimated via Bayesian approach (PCA)
-            miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
-                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
-            ).posterior_predictive()
-            beta_pca = Weight_Calc(smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
-            return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
+            if pca:
+                miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
+                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
+                ).posterior_predictive()
+                beta_pca = Weight_Calc(
+                    smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return, boundary
+                ).retrieve_beta()
+                return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
             # if i < end - 1:
@@ -195,14 +204,20 @@ def return_compare(
                 smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return, boundary
             ).retrieve_beta()
             return_series_sample.append(stock_return.iloc[time_period[1], :] @ beta_sample)
+            beta_sample = pd.DataFrame(
+                beta_sample.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]]
+            )
+            result_beta_sample = pd.concat([result_beta_sample, beta]).fillna(0)
 
             # Equal weight allocation
             if equal_weight:
                 N = stock_return.iloc[time_period[1], :].shape[0]
                 beta_ew = np.array([1 / N for _ in range(N)])
+                if short_only:
+                    beta_ew = -1 * beta_ew
                 return_series_ew.append(stock_return.iloc[time_period[1], :] @ beta_ew)
 
-            # Market value weight allocation (questionable)
+            # Market value weight allocation (not usable for now, need market volume data)
             if mv_weight:
                 beta_mv = np.array(stock_data.iloc[time_period[1] - 1, :] / sum(stock_data.iloc[time_period[1] - 1, :]))
                 return_series_mv.append(stock_return.iloc[time_period[1], :] @ beta_mv)
@@ -217,8 +232,9 @@ def return_compare(
     # Calculate cumulative return
     for i in range(1, len(return_series)):
         return_series[i] = (1 + return_series[i - 1]) * (1 + return_series[i]) - 1
-        return_series_pca[i] = (1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
         return_series_sample[i] = (1 + return_series_sample[i - 1]) * (1 + return_series_sample[i]) - 1
+        if pca:
+            return_series_pca[i] = (1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
         if equal_weight:
             return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
@@ -229,8 +245,9 @@ def return_compare(
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 4))
     plt.plot(x, return_series, label="Bayesian")
-    plt.plot(x, return_series_pca, label="Bayesian (PCA)")
     plt.plot(x, return_series_sample, label="Sample")
+    if pca:
+        plt.plot(x, return_series_pca, label="Bayesian (PCA)")
     if equal_weight:
         plt.plot(x, return_series_ew, label="Equal Weight")
     if mv_weight:
@@ -238,6 +255,9 @@ def return_compare(
     if spx_return is not None:
         plt.plot(x, spx_return_series, label="SPX")
 
+    # Plot the cumulative return series
+    if smart_scheme == "SpecReturn":
+        smart_scheme = f"Specific Return={required_return:.2%}"
     plt.title(f"Cumulative Return ({smart_scheme})", fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
@@ -249,6 +269,12 @@ def return_compare(
     if plot_name:
         plt.savefig(os.path.join("img", plot_name))
     plt.show()
+
+    # Save the weights to Excel
+    if weight_name:
+        with pd.ExcelWriter(os.path.join("output", weight_name)) as writer:
+            result_beta.to_excel(writer, sheet_name="Bayesian")
+            result_beta_sample.to_excel(writer, sheet_name="Sample")
 
 
 def compare_efficient_fronter(
@@ -374,15 +400,16 @@ if __name__ == "__main__":
         stock_data=stock_universe_data,
         factor_return=factor_return,
         rf_data=rf_data,
-        smart_scheme="MDR",
+        smart_scheme="SpecReturn",
         boundary=(0, 1),
         required_return=0.0025,
         spx_return=spx_return,
-        plot_name="return_compare_selected_MDR_rebalance.png",
+        # plot_name="return_compare_long_SpecReturn_01.png",
+        weight_name="long_SpecReturn_0025.xlsx",
+        pca=False,
         equal_weight=True,
         mv_weight=False,
         start_date="2020-01-01",
-        end_date="2022-12-31",
         ticker_df=ticker_df,
     )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")

@@ -1,10 +1,14 @@
 # A Comprehensive Approach to Construct a Portfolio: Factor Model, Bayesian Shrinkage and Smart Beta
 
+## Introduction
+
+## Stock Selection
+
 ## Integration with Bayesian Shrinkage on Factors
 
 ### Model Specification
 
-With the factors specified above, each stock's return $r_m\text{, } m \in (1, M)$, is modeled by the below equations:
+With the factors provided, each stock's return $r_m\text{, } m \in [1, M]$, is modeled by the below equations:
 
 $$
 r_m = F\beta_m + \epsilon_m \\
@@ -14,7 +18,7 @@ $$
 
 where $r_m$ is a row vector that represents the return time series of stock $m$ spanning in time $T$, $F = [f_1, \cdots, f_t]^T$ is a $T \times K$ matrix that represents the $K$ factors return time series spanning in time $T$, $\beta_m$ is a $K \times 1$ row vector that represents the factor loadings.
 
-We are aiming to model the Bayesian posterior predictive moments $\text{E}(r_m)$ and $\text{Cov}(r_i, r_j)$, where $m, i, j \in (0, M)$. This will be the input for our Smart Beta (stock weights) calculation.
+We are aiming to model the Bayesian posterior predictive moments $\text{E}(r_m)$ and $\text{Cov}(r_i, r_j)$, where $m, i, j \in [1, M]$. This will be the input for our Smart Beta (stock weights) calculation.
 
 ### Prior Distributions
 
@@ -26,7 +30,7 @@ p(\sigma_m^2) \propto \frac{1}{\sigma_m^2} \\
 p(\mu_f, \Omega_f) \propto |\Omega_f|^{-\frac{K+1}{2}}
 $$
 
-Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because it benefits estimation by striking a balance between bias and variance. $g$ emerges as a measure of shrinkage intensity. The smaller value of $g$, the stronger shrinkage towards the prior mean $\beta_{m, 0}$. This hyperparameter ($g^*$) will be optimized in the below section. The priors for $\sigma_m^2$ and $(\mu_f, \Omega_f)$ are essentially uninformative, so we "let the data speak for itself".
+Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because it benefits estimation by striking a balance between bias and variance. $g$ emerges as a measure of shrinkage intensity. The smaller value of $g$, the stronger shrinkage towards the prior mean $\beta_{m, 0}$. This hyperparameter ($g^*$) will be optimized in the [below section](#determining-shrinkage-intensity). The priors for $\sigma_m^2$ and $(\mu_f, \Omega_f)$ are essentially uninformative, so we "let the data speak for itself".
 
 ### Posterior Distributions
 
@@ -127,7 +131,7 @@ def post_Lambda_n(self) -> np.ndarray:
     return Lambda_n / (self.T - self.K - 2)
 ```
 
-### Determining Shrinkage Intensity $g^*$
+### Determining Shrinkage Intensity
 
 For Zellner’s g-prior with $\beta_{m,0} = \overrightarrow{0}$, the marginal likelihood $p(r_m\mid g)$ has a known explicit form:
 
@@ -231,3 +235,25 @@ $$
 $$
 
 ## Portfolio Construction
+
+With our selected stocks via [Dual Momentum](#stock-selection) approach and factors data (10 industry portfolios fetched from [Fama and French Database](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_10_ind_port.html), following the paper's approach), we use the preceding 252 days’ returns for parameters estimation and Bayesian update at the end of each trading day. Then with the posterior predictive moments of $r_m$, we obtain the next trading day's weights for each stock through Smart Beta calculation. Finally, we hold the newly-weighted portfolio for one day and rebalcance the weight daily.
+
+The universe of stock selection is rebalanced monthly (i.e. at the first trading day of each month). For the long only stocks, we set the boundary for weight: $w_i \in (0, 1)$, for $i \in [1, M]$, and for short only stocks, we set the boundary for weight: $w_i \in (-1, 0)$, for $i \in [1, M]$. We also choose the parameter $\beta_{m, 0} = \overrightarrow{0}$ and $g^*$ be the MLE.
+
+### A Simple Performance Evaluation
+
+This section serves as a really simplified cumulative returns comparison of each strategy (no transaction cost, no dividend adjustment, no market liquidity assumption, purely based on the closing price) on the **_long only_** stocks selected by the Dual Momentum approach. The evaluation period is from 2020-01-01 to 2024-02-29.
+
+For the long only stocks, we notice that the equal weight strategy has already beat the market after stock selection. For the MDR scheme, even though the Bayesian approach beat the sample approach, they both fail to outperform the equal weight strategy.
+
+![return_compare_long_MDR](img/return_compare_long_MDR.png)
+
+It is more interesting to take a look at the cumulative return when we specify a required daily return. We discovered that when we specify a relative small required return (0.1%, daily) or extremely large required return (1%, daily), which deviate from equal weight method daily return a lot, the Bayesian approach tends to fail.
+
+![return_compare_long_SpecReturn_001](img/return_compare_long_SpecReturn_001.png)
+![return_compare_long_SpecReturn_01](img/return_compare_long_SpecReturn_01.png)
+
+However, when we adjust the required daily return to 0.2% or 0.25%, Bayesian approach beat the sample approach again. The Bayesian approach even earned an extremely abnormal return. This may result from allocating heavy weight to a single stock, which can be interpreted as its ability to capture the "trading signal".
+
+![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_002.png)
+![return_compare_long_SpecReturn_0025](img/return_compare_long_SpecReturn_0025.png)
