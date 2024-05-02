@@ -1,4 +1,5 @@
 import datetime
+import os
 import pandas as pd
 import numpy as np
 import quantstats as qs
@@ -23,12 +24,15 @@ class BLStrategy(bt.Strategy):
     # list for tickers
     params = (
         ('stocks', []),
+        ('printnotify', False),
+        ('printlog', False)
     )
 
     def log(self, txt, dt=None):
         ''' Logging function for this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
+        if self.params.printlog:
+            dt = dt or self.datas[0].datetime.date(0)
+            print('%s, %s' % (dt.isoformat(), txt))
 
     def __init__(self, weights):
         self.datafeeds = {}
@@ -41,21 +45,22 @@ class BLStrategy(bt.Strategy):
             self.datafeeds[ticker] = self.datas[i]
 
     def notify_order(self, order):
-        if order.status in [order.Submitted, order.Accepted]:
-            print(
-                f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
-
-        if order.status in [order.Completed]:
-            if order.isbuy():
+        if self.params.printnotify:
+            if order.status in [order.Submitted, order.Accepted]:
                 print(
-                    f"Bought {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
-            elif order.issell():
-                print(
-                    f"Sold {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
+                    f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
 
-        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            print(
-                f'Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}')
+            if order.status in [order.Completed]:
+                if order.isbuy():
+                    print(
+                        f"Bought {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
+                elif order.issell():
+                    print(
+                        f"Sold {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
+
+            elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+                print(
+                    f'Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}')
 
     # for each date, place orders according to the weights
     def next(self):
@@ -63,8 +68,9 @@ class BLStrategy(bt.Strategy):
         weights = self.weights.loc[date.strftime('%Y-%m-%d')]
 
         if not self.position:
-            print("We do not hold any positions at the moment")
-        self.log(f"Total portfolio value: {self.broker.getvalue()}")
+            self.log("We do not hold any positions at the moment")
+        self.log(
+            f"Total portfolio value: {self.broker.getvalue()}")
 
         for ticker in self.params.stocks:
             # Calculate the target value for this stock based on the target percentage
@@ -108,14 +114,48 @@ class PortfolioValueObserver(bt.Observer):
 #         return {'sortino_ratio': sortino_ratio}
 
 
+def SyntheticData(duration=499, num_stocks=5):
+    # date range
+    start_date = datetime.date(2002, 1, 1)
+    end_date = start_date + datetime.timedelta(days=duration)
+    date_range = pd.bdate_range(start=start_date, end=end_date)
+
+    # fake prices for x stocks
+    num_days = len(date_range)
+    prices = pd.DataFrame(np.random.normal(loc=100, scale=10, size=(
+        num_days, num_stocks)), index=date_range, columns=[f'Stock{i}' for i in range(1, num_stocks+1)])
+    prices = prices.reset_index().rename(columns={"index": "Date"})
+    prices_open = prices.copy()
+    prices_open.iloc[:, 1:] = prices_open.iloc[:, 1:] + \
+        np.random.normal(loc=0, scale=1, size=prices_open.iloc[:, 1:].shape)
+
+    # fake weights for x stocks
+    weights = np.random.uniform(-1, 1, (num_days, num_stocks))
+    weights = weights / weights.sum(axis=1, keepdims=True)
+    weights = pd.DataFrame(weights, index=date_range, columns=[
+                           f'Stock{i}' for i in range(1, num_stocks+1)])
+    weights = weights.reset_index().rename(columns={"index": "Date"})
+
+    return prices, prices_open, weights
+
+
 if __name__ == '__main__':
+    dirname = os.path.dirname(__file__)
+
+    prices, prices_open, weights = SyntheticData()
+
+    # save price and weights
+    # prices.to_csv(f'{dirname}/../data/synthetic_close_prices.csv')
+    # prices_open.to_csv(f'{dirname}/../data/synthetic_open_prices.csv')
+    # weights.to_csv(f'{dirname}/../data/synthetic_weights.csv')
+
     # load price and weights data
     close_prices_df = pd.read_csv(
-        'C:/software/Github_Repo/fina4380-project/data/synthetic_close_prices.csv', index_col='Date', parse_dates=True)
+        f'{dirname}/../data/synthetic_close_prices.csv', index_col='Date', parse_dates=True)
     open_prices_df = pd.read_csv(
-        'C:/software/Github_Repo/fina4380-project/data/synthetic_open_prices.csv', index_col='Date', parse_dates=True)
+        f'{dirname}/../data/synthetic_open_prices.csv', index_col='Date', parse_dates=True)
     weights_df = pd.read_csv(
-        'C:/software/Github_Repo/fina4380-project/data/synthetic_weights.csv', index_col='Date', parse_dates=True)
+        f'{dirname}/../data/synthetic_weights.csv', index_col='Date', parse_dates=True)
     weights_df = weights_df / \
         weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
 
@@ -141,17 +181,16 @@ if __name__ == '__main__':
     cerebro.broker.setcommission(commission=0.001)
     cerebro.broker.set_shortcash(True)
     cerebro.addstrategy(BLStrategy, weights=weights_df,
-                        stocks=close_prices_df.columns)
+                        stocks=close_prices_df.columns, printnotify=False, printlog=False)
 
     # analyze strategy
     cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
     cerebro.addanalyzer(bt.analyzers.TimeReturn,
                         timeframe=bt.TimeFrame.NoTimeFrame, _name='CummulativeReturn')
     cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name='AnnualReturn')
-    # cerebro.addanalyzer(bt.analyzers.Calmar, _name='CalmaraRatio')
-    # cerebro.addanalyzer(bt.analyzers.SharpeRatio,
-    #                     riskfreerate=0.03, annualize=True, _name='SharpeRatio')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='DrawDown')
+    # cerebro.addanalyzer(bt.analyzers.Calmar, _name='CalmaraRatio')
+    # cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.03, annualize=True, _name='SharpeRatio')
 
     # inital value
     print('Starting Portfolio Value:', cerebro.broker.getvalue())
@@ -161,53 +200,22 @@ if __name__ == '__main__':
         data.plotinfo.plot = False  # Disable plotting of individual stocks
     cerebro.addobserver(PortfolioValueObserver)
 
+    # run the strategy
     results = cerebro.run()
     # cerebro.plot()
 
+    # store portfolio returns
     strat = results[0]
     portfolio_stras = strat.analyzers.getbyname('pyfolio')
-    returns, _, _, _ = portfolio_stras.get_pf_items()
-    # print('Total Return:', returns)
+    returns, positions, transactions, gross_lev = portfolio_stras.get_pf_items()
+    print(returns.head())
+    returns.to_csv(f'{dirname}/../data/returns.csv')
 
     # performance matrices
-    # print('PyFolio:', strat.analyzers.pyfolio.get_pf_items())
     print('Final Portfolio Value:', cerebro.broker.getvalue())
     print('Cummulative Return:', strat.analyzers.CummulativeReturn.get_analysis())
     print('Annual Return:', strat.analyzers.AnnualReturn.get_analysis())
+    print('Draw Down:', strat.analyzers.DrawDown.get_analysis())
+    # print('PyFolio:', strat.analyzers.pyfolio.get_pf_items())
     # print('Sharpe Ratio:', strat.analyzers.SharpeRatio.get_analysis())
     # print('Calmar Ratio:', strat.analyzers.CalmaraRatio.get_analysis())
-    print('Draw Down:', strat.analyzers.DrawDown.get_analysis())
-
-    # create quantstats report
-    qs.reports.html(
-        returns, output='C:/software/Github_Repo/fina4380-project/doc/quantstats.html', title='FINA4380 Portfolio')
-
-
-# date range
-start_date = datetime.date(2002, 1, 1)
-end_date = start_date + datetime.timedelta(days=499)
-date_range = pd.bdate_range(start=start_date, end=end_date)
-
-# fake price for 5 stocks
-num_days = len(date_range)
-num_stocks = 5
-prices = pd.DataFrame(np.random.normal(loc=100, scale=10, size=(
-    num_days, num_stocks)), index=date_range, columns=[f'Stock{i}' for i in range(1, num_stocks+1)])
-prices = prices.reset_index().rename(columns={"index": "Date"})
-
-# fake weights for 5 stocks
-weights = np.random.uniform(-1, 1, (num_days, num_stocks))
-weights = weights / weights.sum(axis=1, keepdims=True)
-weights = pd.DataFrame(weights, index=date_range, columns=[
-    f'Stock{i}' for i in range(1, num_stocks+1)])
-weights = weights.reset_index().rename(columns={"index": "Date"})
-
-
-# save price and weights
-# prices.to_csv('../data/synthetic_open_prices.csv')
-# weights.to_csv('../data/synthetic_weights.csv')
-
-# print("Data generated and saved successfully.")
-
-# print(prices.head())
-# print(weights.head())
