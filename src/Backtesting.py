@@ -1,0 +1,213 @@
+import datetime
+import pandas as pd
+import numpy as np
+import quantstats as qs
+import backtrader as bt
+import matplotlib.pyplot as plt
+
+
+class PandasData(bt.feeds.PandasData):
+    lines = ('open', 'close')
+    params = (
+        ('datetime', None),  # use index as datetime
+        ('open', 0),         # the [0] column is open price
+        ('close', 1),        # the [1] column is close price
+        ('high', 0),
+        ('low', 0),
+        ('volume', 0),
+        ('openinterest', 0),
+    )
+
+
+class BLStrategy(bt.Strategy):
+    # list for tickers
+    params = (
+        ('stocks', []),
+    )
+
+    def log(self, txt, dt=None):
+        ''' Logging function for this strategy'''
+        dt = dt or self.datas[0].datetime.date(0)
+        print('%s, %s' % (dt.isoformat(), txt))
+
+    def __init__(self, weights):
+        self.datafeeds = {}
+        self.weights = weights                              # weights for all stocks
+        self.committed_cash = 0
+        self.bar_executed = 0
+
+        # price data and order tracking for each stock
+        for i, ticker in enumerate(self.params.stocks):
+            self.datafeeds[ticker] = self.datas[i]
+
+    def notify_order(self, order):
+        if order.status in [order.Submitted, order.Accepted]:
+            print(
+                f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
+
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                print(
+                    f"Bought {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
+            elif order.issell():
+                print(
+                    f"Sold {order.executed.size} shares of {order.data._name} at {order.executed.price}, cost: {order.executed.value}, comm: {order.executed.comm}")
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            print(
+                f'Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}')
+
+    # for each date, place orders according to the weights
+    def next(self):
+        date = self.data.datetime.date(0)
+        weights = self.weights.loc[date.strftime('%Y-%m-%d')]
+
+        if not self.position:
+            print("We do not hold any positions at the moment")
+        self.log(f"Total portfolio value: {self.broker.getvalue()}")
+
+        for ticker in self.params.stocks:
+            # Calculate the target value for this stock based on the target percentage
+            data = self.datafeeds[ticker]
+            target_percent = weights[ticker]
+
+            self.log(
+                f"{ticker} Open: {data.open[0]}, Close: {data.close[0]}, Target Percent: {target_percent}")
+            self.orders = self.order_target_percent(
+                data, target=target_percent)
+
+
+class PortfolioValueObserver(bt.Observer):
+    lines = ('value',)
+    plotinfo = dict(plot=True, subplot=True)
+
+    def next(self):
+        self.lines.value[0] = self._owner.broker.getvalue()
+
+
+# class SortinoRatio(bt.Analyzer):
+#     def __init__(self):
+#         self.returns = []
+
+#     def start(self):
+#         self.returns = []
+
+#     def next(self):
+#         self.returns.append(self.strategy.pnl)
+
+#     def get_analysis(self):
+#         returns = np.array(self.returns)
+#         downside_returns = returns[returns < 0]
+#         downside_deviation = np.std(downside_returns, ddof=1)
+#         # Assuming daily returns and 252 trading days
+#         annualized_return = np.mean(returns) * 252
+#         if downside_deviation != 0:
+#             sortino_ratio = annualized_return / downside_deviation
+#         else:
+#             sortino_ratio = None
+#         return {'sortino_ratio': sortino_ratio}
+
+
+if __name__ == '__main__':
+    # load price and weights data
+    close_prices_df = pd.read_csv(
+        'C:/software/Github_Repo/fina4380-project/data/synthetic_close_prices.csv', index_col='Date', parse_dates=True)
+    open_prices_df = pd.read_csv(
+        'C:/software/Github_Repo/fina4380-project/data/synthetic_open_prices.csv', index_col='Date', parse_dates=True)
+    weights_df = pd.read_csv(
+        'C:/software/Github_Repo/fina4380-project/data/synthetic_weights.csv', index_col='Date', parse_dates=True)
+    weights_df = weights_df / \
+        weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
+
+    # Combine open and close prices into one DataFrame
+    combined_df = open_prices_df.join(
+        close_prices_df, lsuffix='_open', rsuffix='_close')
+    combined_df = combined_df.dropna()
+
+    # align the date of price and weights
+    weights_df = weights_df.loc[combined_df.index]
+
+    # initialize cerebro engine
+    cerebro = bt.Cerebro()
+
+    # read data feeds
+    for col in close_prices_df.columns:
+        data = PandasData(
+            dataname=combined_df[[col + '_open', col + '_close']])
+        cerebro.adddata(data, name=col)
+
+    # strategy setting
+    cerebro.broker.setcash(100000)
+    cerebro.broker.setcommission(commission=0.001)
+    cerebro.broker.set_shortcash(True)
+    cerebro.addstrategy(BLStrategy, weights=weights_df,
+                        stocks=close_prices_df.columns)
+
+    # analyze strategy
+    cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
+    cerebro.addanalyzer(bt.analyzers.TimeReturn,
+                        timeframe=bt.TimeFrame.NoTimeFrame, _name='CummulativeReturn')
+    cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name='AnnualReturn')
+    # cerebro.addanalyzer(bt.analyzers.Calmar, _name='CalmaraRatio')
+    # cerebro.addanalyzer(bt.analyzers.SharpeRatio,
+    #                     riskfreerate=0.03, annualize=True, _name='SharpeRatio')
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='DrawDown')
+
+    # inital value
+    print('Starting Portfolio Value:', cerebro.broker.getvalue())
+
+    # add observer
+    for data in cerebro.datas:
+        data.plotinfo.plot = False  # Disable plotting of individual stocks
+    cerebro.addobserver(PortfolioValueObserver)
+
+    results = cerebro.run()
+    # cerebro.plot()
+
+    strat = results[0]
+    portfolio_stras = strat.analyzers.getbyname('pyfolio')
+    returns, _, _, _ = portfolio_stras.get_pf_items()
+    # print('Total Return:', returns)
+
+    # performance matrices
+    # print('PyFolio:', strat.analyzers.pyfolio.get_pf_items())
+    print('Final Portfolio Value:', cerebro.broker.getvalue())
+    print('Cummulative Return:', strat.analyzers.CummulativeReturn.get_analysis())
+    print('Annual Return:', strat.analyzers.AnnualReturn.get_analysis())
+    # print('Sharpe Ratio:', strat.analyzers.SharpeRatio.get_analysis())
+    # print('Calmar Ratio:', strat.analyzers.CalmaraRatio.get_analysis())
+    print('Draw Down:', strat.analyzers.DrawDown.get_analysis())
+
+    # create quantstats report
+    qs.reports.html(
+        returns, output='C:/software/Github_Repo/fina4380-project/doc/quantstats.html', title='FINA4380 Portfolio')
+
+
+# date range
+start_date = datetime.date(2002, 1, 1)
+end_date = start_date + datetime.timedelta(days=499)
+date_range = pd.bdate_range(start=start_date, end=end_date)
+
+# fake price for 5 stocks
+num_days = len(date_range)
+num_stocks = 5
+prices = pd.DataFrame(np.random.normal(loc=100, scale=10, size=(
+    num_days, num_stocks)), index=date_range, columns=[f'Stock{i}' for i in range(1, num_stocks+1)])
+prices = prices.reset_index().rename(columns={"index": "Date"})
+
+# fake weights for 5 stocks
+weights = np.random.uniform(-1, 1, (num_days, num_stocks))
+weights = weights / weights.sum(axis=1, keepdims=True)
+weights = pd.DataFrame(weights, index=date_range, columns=[
+    f'Stock{i}' for i in range(1, num_stocks+1)])
+weights = weights.reset_index().rename(columns={"index": "Date"})
+
+
+# save price and weights
+# prices.to_csv('../data/synthetic_open_prices.csv')
+# weights.to_csv('../data/synthetic_weights.csv')
+
+# print("Data generated and saved successfully.")
+
+# print(prices.head())
+# print(weights.head())
