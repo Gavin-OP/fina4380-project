@@ -9,10 +9,14 @@ if __name__ == "__main__":
     # initialization
     dirname = os.path.dirname(__file__)
     aum0 = 100000
+    target_return = "002"
+    sheet_name = "Bayesian"
+    comm_fee = "001"
 
-    # this part may need read returns for several periods
     # load returns and benchmark
-    returns = pd.read_csv(f"{dirname}/../data/returns.csv", index_col=0)
+    returns = pd.read_csv(
+        f"{dirname}/../output/returns_{target_return}_{comm_fee}_{sheet_name}.csv", index_col=0)
+    # f"{dirname}/../output/returns.csv", index_col=0)
     returns = returns.squeeze()
     returns.index = pd.to_datetime(returns.index, format='%Y-%m-%d')
     spx_prices = pd.read_excel(
@@ -22,7 +26,7 @@ if __name__ == "__main__":
 
     # quantstats report
     qs.reports.html(
-        returns, output=f'{dirname}/../doc/fina4380_backtest_report.html', title='FINA4380 Portfolio')
+        returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm_fee}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return{target_return} Commission Fee{comm_fee} {sheet_name} Report')
 
     # align the date of price and returns
     returns.index = returns.index.to_period('D')
