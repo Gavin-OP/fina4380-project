@@ -18,7 +18,7 @@ We are aiming to model the Bayesian posterior predictive moments $\text{E}(r_m)$
 
 ### Prior Distributions
 
-To maintain closed-form solutions in MV analysis, we adopted fully conjugate and well established priors: **Zellner’s g-prior** for $\beta_m$ and **Normal-Inverse-Wishart prior (Jeffrey’s priors)** for $\sigma_m^2$ and $(\mu_f, \Omega_f)$.
+To maintain closed-form solutions in MV analysis, we adopted fully conjugate and well established priors: **_Zellner’s g-prior_** for $\beta_m$ and **_Normal-Inverse-Wishart prior (Jeffrey’s priors)_** for $\sigma_m^2$ and $(\mu_f, \Omega_f)$.
 
 $$
 \beta\mid\sigma_m^2 \sim \mathcal{N}(\beta_{m, 0}, g\sigma_m^2(F^TF)^{-1}) \\
@@ -163,22 +163,22 @@ def g_likelihood(self, g) -> float:
 
 ### Determining Posterior Predictive Moments of $r_m$
 
-Denote $\operatorname{E}[\cdot\mid\mathcal{F}] = \operatorname{E}[\cdot], \operatorname{Var}[\cdot\mid\mathcal{F}] = \operatorname{Var}[\cdot], \operatorname{Cov}[\cdot\mid\mathcal{F}] = \operatorname{Cov}[\cdot]$, then the posterior predictive moments of stock returns under the Bayesian factor model are:
+Denote $\text{E}[\cdot\mid\mathcal{F}] = \text{E}[\cdot], \text{Var}[\cdot\mid\mathcal{F}] = \text{Var}[\cdot], \text{Cov}[\cdot\mid\mathcal{F}] = \text{Cov}[\cdot]$, then the posterior predictive moments of stock returns under the Bayesian factor model are:
 
 $$
-\operatorname{E}[r_m]=\operatorname{E}[\beta_m]^T \operatorname{E}[\mu_f] \\
-\operatorname{Var}[r_m]=\operatorname{E}[\sigma_m^2]+\operatorname{Tr}(\operatorname{E}[f f^T] \operatorname{Var}[\beta_m])+\operatorname{E}[\beta_m]^T \operatorname{Var}[f] \operatorname{E}[\beta_m] \\
-\operatorname{Cov}(r_i, r_j)=\operatorname{E}[\beta_i]^T \operatorname{Var}[f] \operatorname{E}[\beta_j]
+\text{E}[r_m]=\text{E}[\beta_m]^T \text{E}[\mu_f] \\
+\text{Var}[r_m]=\text{E}[\sigma_m^2]+\text{Tr}(\text{E}[f f^T] \text{Var}[\beta_m])+\text{E}[\beta_m]^T \text{Var}[f] \text{E}[\beta_m] \\
+\text{Cov}(r_i, r_j)=\text{E}[\beta_i]^T \text{Var}[f] \text{E}[\beta_j]
 $$
 
 where
 
 $$
-\operatorname{E}[f f^T]=\operatorname{E}[\Omega_f]+\operatorname{Var}[\mu_f]+\operatorname{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
-\operatorname{Var}[f]=\operatorname{E}[\Omega_f]+\operatorname{Var}[\mu_f]
+\text{E}[f f^T]=\text{E}[\Omega_f]+\text{Var}[\mu_f]+\text{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
+\text{Var}[f]=\text{E}[\Omega_f]+\text{Var}[\mu_f]
 $$
 
-with $\operatorname{E}[\mu_f], \operatorname{Var}[\mu_f], \operatorname{E}[\sigma_m^2], \operatorname{E}[\beta_m], \operatorname{Var}[\beta_m], \operatorname{E}[\Omega_f]$ obtained from the posterior distributions after Bayesian updates mentioned above.
+with $\text{E}[\mu_f], \text{Var}[\mu_f], \text{E}[\sigma_m^2], \text{E}[\beta_m], \text{Var}[\beta_m], \text{E}[\Omega_f]$ obtained from the posterior distributions after Bayesian updates mentioned above.
 
 ```python
 # Posterior predictive return distribution (mean vector and covariance matrix) and shrinkage parameter g*
@@ -214,7 +214,7 @@ d_1(\mathbf{a}, \mathbf{b}) = \sum_{i=1}^M \mid \mathbf{a}_i - \mathbf{b}_i \mid
 d_1(A, B) = \sum_{i=1}^M \sum_{j=1}^i \mid A_{i,j} - B_{i,j} \mid
 $$
 
-The below plots shows the estimates’ difference and estimated $g^*$ at each time point on _randomly selected_ stocks (i.e. every fifth stock in S&P 500) over last decade:
+The below plots shows the estimates’ difference and estimated $g^*$ at each time point on **_randomly selected_** stocks (i.e. every fifth stock in S&P 500) over last decade:
 
 ![tracking diff](img/tracking_diff_selected.png)
 
@@ -227,7 +227,7 @@ After we have obtained the Bayesian predictive posterior mean and covariance mat
 We also add a weight calculation scheme that allows us to specify a required expected return $(\tilde{r})$ for the next period, while minimize the variance of the portfolio, i.e. add the following constrain additional to GMV:
 
 $$
-\tilde{r} = w^T\operatorname{E}(r)
+\tilde{r} = w^T\text{E}(r)
 $$
 
 ## Portfolio Construction
