@@ -142,7 +142,11 @@ def return_compare(
 
     return_series, return_series_pca, return_series_sample = [], [], []
     return_series_ew, return_series_mv = [], []
-    result_beta, result_beta_sample = pd.DataFrame(columns=stock_univ_data.columns), pd.DataFrame(columns=stock_univ_data.columns)
+    result_beta, result_beta_sample, result_beta_ew = (
+        pd.DataFrame(columns=stock_univ_data.columns),
+        pd.DataFrame(columns=stock_univ_data.columns),
+        pd.DataFrame(columns=stock_univ_data.columns),
+    )
     spx_return_series = []
     with Progress(
         TextColumn("[progress.description]{task.description}"),
@@ -216,6 +220,10 @@ def return_compare(
                 if short_only:
                     beta_ew = -1 * beta_ew
                 return_series_ew.append(stock_return.iloc[time_period[1], :] @ beta_ew)
+                beta_ew = pd.DataFrame(
+                    beta_ew.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]]
+                )
+                result_beta_ew = pd.concat([result_beta_ew, beta_ew]).fillna(0)
 
             # Market value weight allocation (not usable for now, need market volume data)
             if mv_weight:
@@ -275,6 +283,7 @@ def return_compare(
         with pd.ExcelWriter(os.path.join("output", weight_name)) as writer:
             result_beta.to_excel(writer, sheet_name="Bayesian")
             result_beta_sample.to_excel(writer, sheet_name="Sample")
+    result_beta_ew.to_excel(os.path.join("output", "equal_weight.xlsx"))
 
 
 def compare_efficient_fronter(
