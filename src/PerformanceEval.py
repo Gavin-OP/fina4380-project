@@ -5,37 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 
-if __name__ == "__main__":
-    # initialization
-    dirname = os.path.dirname(__file__)
-    aum0 = 100000
-    target_return = "002"
-    sheet_name = "Bayesian"
-    comm = "001"
-
-    # load returns and benchmark
-    returns = pd.read_csv(
-        f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv", index_col=0)
-    # f"{dirname}/../output/returns.csv", index_col=0)
-    returns = returns.squeeze()
-    returns.index = pd.to_datetime(returns.index, format='%Y-%m-%d')
-    spx_prices = pd.read_excel(
-        f'{dirname}/../data/SPX Daily Closing Price 14-24.xlsx', index_col=0)
-    spx_prices.index = pd.to_datetime(spx_prices.index, format='%Y-%m-%d')
-    port_prices = (1 + returns).cumprod() * aum0
-
-    # quantstats report
-    qs.reports.html(
-        returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return{target_return} Commission Fee{comm} {sheet_name} Report')
-
-    # align the date of price and returns
-    returns.index = returns.index.to_period('D')
-    spx_prices.index = spx_prices.index.to_period('D')
-    spx_prices = spx_prices.reindex(returns.index, method='ffill')
-    spx_prices.index = spx_prices.index.to_timestamp()
-    returns.index = returns.index.to_timestamp()
-    spx_prices = spx_prices / spx_prices.iloc[0] * aum0
-
+def PortReport(port_prices, spx_prices, target_return, comm, sheet_name, dirname):
     # plot the price and benchmark with drawdown
     plt.figure(figsize=(20, 10))
     gs = gridspec.GridSpec(7, 1)
@@ -47,8 +17,6 @@ if __name__ == "__main__":
     # portfolio vs benchmark
     ax1.plot(port_prices, label='Portfolio', color='#5aa2d4')
     ax1.plot(spx_prices, label='SPX', color='#c0c0c0')
-
-    # beautify the plot
     ax1.get_xaxis().set_visible(False)
     ax1.grid(axis='y', linestyle='--', alpha=0.6)
     ax1.legend(loc='upper right', frameon=False, fontsize=12,
@@ -61,7 +29,79 @@ if __name__ == "__main__":
     ax2.set_title('Drawdown')
     ax2.grid(axis='y', linestyle='--', alpha=0.6)
 
-    plt.suptitle('Portfolio vs SPX', fontsize=20, y=0.95)
+    plt.suptitle('Portfolio vs SPX', fontweight='bold')
     plt.savefig(
-        f'{dirname}/../img/port_vs_spx_{target_return}_comm{comm}_{sheet_name}.png')
+        f'{dirname}/../img/port_vs_spx_{target_return}_comm{comm}_{sheet_name}.png', bbox_inches='tight')
     plt.show()
+
+    # quantstats report
+    qs.reports.html(
+        returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return: {target_return} Commission Fee: {comm} {sheet_name} Report')
+
+
+if __name__ == "__main__":
+    # initialization
+    dirname = os.path.dirname(__file__)
+    # aum0 = 100000
+    target_return = "002"
+    sheet_name = "Bayesian"
+    comm = "001"
+    init_cash = 100000000
+
+    # load returns and benchmark
+    returns = pd.read_csv(
+        f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv", index_col=0)
+    # f"{dirname}/../output/returns.csv", index_col=0)
+    returns = returns.squeeze()
+    returns.index = pd.to_datetime(returns.index, format='%Y-%m-%d')
+    spx_prices = pd.read_excel(
+        f'{dirname}/../data/SPX Daily Closing Price 14-24.xlsx', index_col=0)
+    spx_prices.index = pd.to_datetime(spx_prices.index, format='%Y-%m-%d')
+    port_prices = (1 + returns).cumprod() * init_cash
+
+    # # quantstats report
+    # qs.reports.html(
+    #     returns, output=f'{dirname}/../output/backtest_{target_return}_comm{comm}_{sheet_name}_report.html', title=f'FINA4380 Portfolio Target Return{target_return} Commission Fee{comm} {sheet_name} Report')
+
+    # align the date of price and returns
+    returns.index = returns.index.to_period('D')
+    spx_prices.index = spx_prices.index.to_period('D')
+    spx_prices = spx_prices.reindex(returns.index, method='ffill')
+    spx_prices.index = spx_prices.index.to_timestamp()
+    returns.index = returns.index.to_timestamp()
+    spx_prices = spx_prices / spx_prices.iloc[0] * init_cash
+
+    # plot the price and benchmark with drawdown
+    PortReport(port_prices, spx_prices, target_return,
+               comm, sheet_name, dirname)
+
+    # # plot the price and benchmark with drawdown
+    # plt.figure(figsize=(20, 10))
+    # gs = gridspec.GridSpec(7, 1)
+
+    # # add subplots
+    # ax1 = plt.subplot(gs[0:5, :])
+    # ax2 = plt.subplot(gs[5:6, :])
+
+    # # portfolio vs benchmark
+    # ax1.plot(port_prices, label='Portfolio', color='#5aa2d4')
+    # ax1.plot(spx_prices, label='SPX', color='#c0c0c0')
+
+    # # beautify the plot
+    # ax1.get_xaxis().set_visible(False)
+    # ax1.grid(axis='y', linestyle='--', alpha=0.6)
+    # ax1.legend(loc='upper right', frameon=False, fontsize=12,
+    #            facecolor='none', edgecolor='none', labelcolor='#595959', ncol=2)
+
+    # # plot the drawdown of portfolio
+    # drawdown = qs.stats.to_drawdown_series(port_prices)
+    # ax2.plot(drawdown, color='#5aa2d4')
+    # ax2.fill_between(drawdown.index, drawdown, 0, color='#5aa2d4', alpha=0.1)
+    # ax2.set_title('Drawdown')
+    # ax2.grid(axis='y', linestyle='--', alpha=0.6)
+
+    # plt.suptitle('Portfolio vs SPX', fontweight='bold')
+    # # plt.suptitle('Portfolio vs SPX', fontsize=25, y=0.95, fontdict={"fontweight": "bold"})
+    # plt.savefig(
+    #     f'{dirname}/../img/port_vs_spx_{target_return}_comm{comm}_{sheet_name}.png', bbox_inches='tight')
+    # # plt.show()

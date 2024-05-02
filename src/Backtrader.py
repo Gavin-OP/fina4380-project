@@ -2,9 +2,9 @@ import datetime
 import os
 import pandas as pd
 import numpy as np
-import quantstats as qs
+# import quantstats as qs
 import backtrader as bt
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 class PandasData(bt.feeds.PandasData):
@@ -149,55 +149,7 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
     return data
 
 
-if __name__ == "__main__":
-    dirname = os.path.dirname(__file__)
-    target_return = "0025"
-    sheet_name = "Bayesian"
-    comm = "001"
-    comm_fee = int(comm) / 1000
-
-    prices, prices_open, weights = SyntheticData()
-
-    # save price and weights
-    # prices.to_csv(f'{dirname}/../data/synthetic_close_prices.csv')
-    # prices_open.to_csv(f'{dirname}/../data/synthetic_open_prices.csv')
-    # weights.to_csv(f'{dirname}/../data/synthetic_weights.csv')
-
-    # load price and weights data
-    # close_prices_df = pd.read_csv(
-    #     f'{dirname}/../data/synthetic_close_prices.csv', index_col='Date', parse_dates=True)
-    # open_prices_df = pd.read_csv(
-    #     f'{dirname}/../data/synthetic_open_prices.csv', index_col='Date', parse_dates=True)
-    # weights_df = pd.read_csv(
-    #     f'{dirname}/../data/synthetic_weights.csv', index_col='Date', parse_dates=True)
-
-    # close_prices_df = pd.read_csv(f"{dirname}/../data/spx_close_2014_24.csv", index_col="Date", parse_dates=True)
-    # open_prices_df = pd.read_csv(f"{dirname}/../data/spx_open_2014_24.csv", index_col="Date", parse_dates=True)
-    # weights_df = pd.read_csv(f"{dirname}/../data/long_SpecReturn_002.csv", index_col="Date", parse_dates=True)
-
-    close_prices_df = pd.read_excel(
-        f"{dirname}/../data/S&P500 Daily Closing Price 2014-2024.xlsx", sheet_name="S&P500 2014-2024")
-    close_prices_df = data_cleaning(close_prices_df)
-    open_prices_df = pd.read_excel(
-        f"{dirname}/../data/S&P 500 Trading Volume,  Open Price 14-24.xlsx", sheet_name="S&P 500 Opening Price 14-24")
-    open_prices_df = data_cleaning(open_prices_df)
-    weights_df = pd.read_excel(
-        f"{dirname}/../output/long_SpecReturn_{target_return}.xlsx", sheet_name=sheet_name)
-    # weights_df = pd.read_excel(
-    #     f"{dirname}/../output/long_SpecReturn_0025.xlsx", sheet_name="Bayesian")
-    weights_df = data_cleaning(weights_df)
-
-    weights_df = weights_df / \
-        weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
-
-    # Combine open and close prices into one DataFrame
-    combined_df = open_prices_df.join(
-        close_prices_df, lsuffix="_open", rsuffix="_close")
-    combined_df = combined_df.dropna()
-
-    # align the date of price and weights
-    combined_df = combined_df.loc[weights_df.index]
-
+def RunBacktest(stock_list, combined_df, weights_df, ini_cash, comm_fee, notify, log):
     # initialize cerebro engine
     cerebro = bt.Cerebro()
 
@@ -208,23 +160,16 @@ if __name__ == "__main__":
         cerebro.adddata(data, name=col)
 
     # strategy setting
-    cerebro.broker.setcash(100000000)
+    weights_df = weights_df / \
+        weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
+
+    cerebro.broker.setcash(ini_cash)
     cerebro.broker.setcommission(commission=comm_fee)
-    cerebro.broker.set_shortcash(True)
     cerebro.addstrategy(BLStrategy, weights=weights_df,
-                        stocks=close_prices_df.columns, printnotify=False, printlog=False)
+                        stocks=stock_list, printnotify=notify, printlog=log)
 
     # analyze strategy
     cerebro.addanalyzer(bt.analyzers.PyFolio, _name="pyfolio")
-    cerebro.addanalyzer(bt.analyzers.TimeReturn,
-                        timeframe=bt.TimeFrame.NoTimeFrame, _name="CummulativeReturn")
-    cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="AnnualReturn")
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="DrawDown")
-    # cerebro.addanalyzer(bt.analyzers.Calmar, _name='CalmaraRatio')
-    # cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.03, annualize=True, _name='SharpeRatio')
-
-    # inital value
-    print("Starting Portfolio Value:", cerebro.broker.getvalue())
 
     # add observer
     for data in cerebro.datas:
@@ -233,22 +178,107 @@ if __name__ == "__main__":
 
     # run the strategy
     results = cerebro.run()
-    cerebro.plot()
+
+    return results
+
+
+if __name__ == "__main__":
+    dirname = os.path.dirname(__file__)
+    target_return = "0025"
+    sheet_name = "Bayesian"
+    comm = "001"
+    comm_fee = int(comm) / 1000
+    init_cash = 100000000
+
+    # save price and weights
+    # prices, prices_open, weights = SyntheticData()
+    # prices.to_csv(f'{dirname}/../data/synthetic_close_prices.csv')
+    # prices_open.to_csv(f'{dirname}/../data/synthetic_open_prices.csv')
+    # weights.to_csv(f'{dirname}/../data/synthetic_weights.csv')
+
+    # load price and weights data
+    close_prices_df = pd.read_excel(
+        f"{dirname}/../data/S&P500 Daily Closing Price 2014-2024.xlsx", sheet_name="S&P500 2014-2024")
+    open_prices_df = pd.read_excel(
+        f"{dirname}/../data/S&P 500 Trading Volume,  Open Price 14-24.xlsx", sheet_name="S&P 500 Opening Price 14-24")
+    weights_df = pd.read_excel(
+        f"{dirname}/../output/long_SpecReturn_{target_return}.xlsx", sheet_name=sheet_name)
+
+    # clean data
+    close_prices_df = data_cleaning(close_prices_df)
+    open_prices_df = data_cleaning(open_prices_df)
+    weights_df = data_cleaning(weights_df)
+
+    # Combine open and close prices into one DataFrame
+    combined_df = open_prices_df.join(
+        close_prices_df, lsuffix="_open", rsuffix="_close")
+    combined_df = combined_df.dropna()
+
+    # align the date of price and weights
+    combined_df = combined_df.loc[weights_df.index]
+    stock_list = close_prices_df.columns
+
+    # weights_df = weights_df / \
+    # weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
+
+    # def RunBacktest(close_prices_df, combined_df, weights_df, ini_cash, comm_fee):
+    #     # initialize cerebro engine
+    #     cerebro = bt.Cerebro()
+
+    #     # read data feeds
+    #     for col in close_prices_df.columns:
+    #         data = PandasData(
+    #             dataname=combined_df[[col + "_open", col + "_close"]])
+    #         cerebro.adddata(data, name=col)
+
+    #     # strategy setting
+    #     weights_df = weights_df / \
+    #         weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
+
+    #     cerebro.broker.setcash(ini_cash)
+    #     cerebro.broker.setcommission(commission=comm_fee)
+    #     # cerebro.broker.set_shortcash(True)
+    #     cerebro.addstrategy(BLStrategy, weights=weights_df,
+    #                         stocks=close_prices_df.columns, printnotify=False, printlog=False)
+
+    #     # analyze strategy
+    #     cerebro.addanalyzer(bt.analyzers.PyFolio, _name="pyfolio")
+    # # cerebro.addanalyzer(bt.analyzers.TimeReturn,
+    # #                     timeframe=bt.TimeFrame.NoTimeFrame, _name="CummulativeReturn")
+    # # cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name="AnnualReturn")
+    # # cerebro.addanalyzer(bt.analyzers.DrawDown, _name="DrawDown")
+    # # cerebro.addanalyzer(bt.analyzers.Calmar, _name='CalmaraRatio')
+    # # cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.03, annualize=True, _name='SharpeRatio')
+
+    #     # inital value
+    #     # print("Starting Portfolio Value:", cerebro.broker.getvalue())
+
+    #     # add observer
+    #     for data in cerebro.datas:
+    #         data.plotinfo.plot = False  # Disable plotting of individual stocks
+    #     cerebro.addobserver(PortfolioValueObserver)
+
+    #     # run the strategy
+    #     results = cerebro.run()
+    #     # cerebro.plot()
+    #     return results
 
     # store portfolio returns
+    results = RunBacktest(stock_list, combined_df,
+                          weights_df, init_cash, comm_fee, False, False)
     strat = results[0]
     portfolio_stras = strat.analyzers.getbyname("pyfolio")
     returns, positions, transactions, gross_lev = portfolio_stras.get_pf_items()
-    print(returns.head())
+    # print(returns.head())
     returns.to_csv(
         f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv")
     # f"{dirname}/../output/returns.csv")
 
     # performance matrices
-    print("Final Portfolio Value:", cerebro.broker.getvalue())
-    print("Cummulative Return:", strat.analyzers.CummulativeReturn.get_analysis())
-    print("Annual Return:", strat.analyzers.AnnualReturn.get_analysis())
-    print("Draw Down:", strat.analyzers.DrawDown.get_analysis())
+    # print("Final Portfolio Value:", cerebro.broker.getvalue())
+    # print("Cummulative Return:", strat.analyzers.CummulativeReturn.get_analysis())
+    # print("Annual Return:", strat.analyzers.AnnualReturn.get_analysis())
+    # print("Draw Down:", strat.analyzers.DrawDown.get_analysis())
     # print('PyFolio:', strat.analyzers.pyfolio.get_pf_items())
     # print('Sharpe Ratio:', strat.analyzers.SharpeRatio.get_analysis())
     # print('Calmar Ratio:', strat.analyzers.CalmaraRatio.get_analysis())
