@@ -1,7 +1,9 @@
 import os
+import Config
 import numpy as np
 import pandas as pd
 from Bayesian_Posterior import Bayesian_Posteriors
+from Backtesting import *
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
@@ -17,12 +19,14 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
         while True:
             try:
-                start = stock_return.index.get_loc(str(start_date.date())) - sample_size
+                start = stock_return.index.get_loc(
+                    str(start_date.date())) - sample_size
                 start = max(start, 0)
                 break
             except KeyError:
                 new_date = start_date + timedelta(days=1)
-                print(f"Data of start date {str(start_date.date())} is not available, adding one day ({str(new_date.date())}).")
+                print(
+                    f"Data of start date {str(start_date.date())} is not available, adding one day ({str(new_date.date())}).")
                 start_date = new_date
     else:
         start = 0
@@ -31,12 +35,14 @@ def process_date(start_date: datetime | str, end_date: datetime | str, stock_ret
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         while True:
             try:
-                end = stock_return.index.get_loc(str(end_date.date())) - sample_size
+                end = stock_return.index.get_loc(
+                    str(end_date.date())) - sample_size
                 end = min(end, len(stock_return) - sample_size)
                 break
             except KeyError:
                 new_date = end_date - timedelta(days=1)
-                print(f"Data of end date {str(end_date.date())} is not available, subtracting one day ({str(new_date.date())}).")
+                print(
+                    f"Data of end date {str(end_date.date())} is not available, subtracting one day ({str(new_date.date())}).")
                 end_date = new_date
     else:
         end = len(stock_return) - sample_size
@@ -68,25 +74,31 @@ def tracking_diff(
             time_period = (i, sample_size + i)
             if pca:
                 miu, cov_mat, g_star = Bayesian_Posteriors(
-                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
+                    factor_return.iloc[time_period[0]: time_period[1],
+                                       :], stock_return.iloc[time_period[0]: time_period[1], :], pca=True
                 ).posterior_predictive()
             else:
                 miu, cov_mat, g_star = Bayesian_Posteriors(
-                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :]
+                    factor_return.iloc[time_period[0]: time_period[1],
+                                       :], stock_return.iloc[time_period[0]: time_period[1], :]
                 ).posterior_predictive()
-            miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
-            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
+            miu_sample = stock_return.iloc[time_period[0]
+                : time_period[1], :].mean()
+            cov_mat_sample = stock_return.iloc[time_period[0]: time_period[1], :].cov(
+            )
             y.append(sum(abs(miu - miu_sample)))
             cov_diff = 0
             for m in range(cov_mat.shape[1]):
                 for j in range(m, cov_mat.shape[1]):
-                    cov_diff += abs(cov_mat[m, j] - cov_mat_sample.values[m, j])
+                    cov_diff += abs(cov_mat[m, j] -
+                                    cov_mat_sample.values[m, j])
             z.append(cov_diff)
             g.append(g_star)
             print(str(stock_return.index[time_period[1]]), "finished.")
             progress.update(task, advance=1)
 
-    x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
+    x = pd.to_datetime(
+        factor_return.index[sample_size + start: sample_size + end])
     plt.figure(figsize=(10, 8))
     plt.subplot(3, 1, 1)
     plt.plot(x, y)
@@ -97,7 +109,8 @@ def tracking_diff(
 
     plt.subplot(3, 1, 2)
     plt.plot(x, z)
-    plt.title("Distance In Covariance Estimate", fontdict={"fontweight": "bold"})
+    plt.title("Distance In Covariance Estimate",
+              fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -136,7 +149,8 @@ def return_compare(
     ticker_df: pd.DataFrame = None,
     short_only: bool = False,
 ):
-    stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
+    stock_data, stock_return = stock_data.iloc[:,
+                                               ::stock_slice], stock_return.iloc[:, ::stock_slice]
     stock_univ_data, stock_univ_return = stock_data, stock_return
     start, end = process_date(start_date, end_date, stock_return, sample_size)
 
@@ -161,27 +175,35 @@ def return_compare(
 
             # Monthly rebalance for stock universe
             if ticker_df is not None:
-                current_month = str(stock_return.index[time_period[1]]).rsplit("-", 1)[0]
-                stock_data, stock_return = stock_switch(ticker_df, current_month, stock_univ_data, stock_univ_return)
+                current_month = str(
+                    stock_return.index[time_period[1]]).rsplit("-", 1)[0]
+                stock_data, stock_return = stock_switch(
+                    ticker_df, current_month, stock_univ_data, stock_univ_return)
 
             # Parameters estimated via Bayesian approach (Non-PCA)
             miu, cov_mat, _ = Bayesian_Posteriors(
-                factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :]
+                factor_return.iloc[time_period[0]: time_period[1],
+                                   :], stock_return.iloc[time_period[0]: time_period[1], :]
             ).posterior_predictive()
-            beta = Weight_Calc(smart_scheme, miu, cov_mat, rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
+            beta = Weight_Calc(smart_scheme, miu, cov_mat,
+                               rf_data.iloc[time_period[1] - 1], required_return, boundary).retrieve_beta()
             return_series.append(stock_return.iloc[time_period[1], :] @ beta)
-            beta = pd.DataFrame(beta.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]])
+            beta = pd.DataFrame(beta.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[
+                                stock_data.index[time_period[1] - 1]])
             result_beta = pd.concat([result_beta, beta]).fillna(0)
 
             # Parameters estimated via Bayesian approach (PCA)
             if pca:
                 miu_pca, cov_mat_pca, _ = Bayesian_Posteriors(
-                    factor_return.iloc[time_period[0] : time_period[1], :], stock_return.iloc[time_period[0] : time_period[1], :], pca=True
+                    factor_return.iloc[time_period[0]: time_period[1],
+                                       :], stock_return.iloc[time_period[0]: time_period[1], :], pca=True
                 ).posterior_predictive()
                 beta_pca = Weight_Calc(
-                    smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] - 1], required_return, boundary
+                    smart_scheme, miu_pca, cov_mat_pca, rf_data.iloc[time_period[1] -
+                                                                     1], required_return, boundary
                 ).retrieve_beta()
-                return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
+                return_series_pca.append(
+                    stock_return.iloc[time_period[1], :] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
             # if i < end - 1:
@@ -202,16 +224,21 @@ def return_compare(
             # return_series_view.append(stock_return.iloc[time_period[1], :] @ beta_view)
 
             # Parameters estimated via sample data
-            miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
-            cov_mat_sample = stock_return.iloc[time_period[0] : time_period[1], :].cov()
+            miu_sample = stock_return.iloc[time_period[0]
+                : time_period[1], :].mean()
+            cov_mat_sample = stock_return.iloc[time_period[0]: time_period[1], :].cov(
+            )
             beta_sample = Weight_Calc(
-                smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[time_period[1] - 1], required_return, boundary
+                smart_scheme, miu_sample, cov_mat_sample, rf_data.iloc[
+                    time_period[1] - 1], required_return, boundary
             ).retrieve_beta()
-            return_series_sample.append(stock_return.iloc[time_period[1], :] @ beta_sample)
+            return_series_sample.append(
+                stock_return.iloc[time_period[1], :] @ beta_sample)
             beta_sample = pd.DataFrame(
                 beta_sample.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]]
             )
-            result_beta_sample = pd.concat([result_beta_sample, beta_sample]).fillna(0)
+            result_beta_sample = pd.concat(
+                [result_beta_sample, beta_sample]).fillna(0)
 
             # Equal weight allocation
             if equal_weight:
@@ -219,7 +246,8 @@ def return_compare(
                 beta_ew = np.array([1 / N for _ in range(N)])
                 if short_only:
                     beta_ew = -1 * beta_ew
-                return_series_ew.append(stock_return.iloc[time_period[1], :] @ beta_ew)
+                return_series_ew.append(
+                    stock_return.iloc[time_period[1], :] @ beta_ew)
                 beta_ew = pd.DataFrame(
                     beta_ew.reshape(1, len(stock_data.columns)), columns=stock_data.columns, index=[stock_data.index[time_period[1] - 1]]
                 )
@@ -227,8 +255,10 @@ def return_compare(
 
             # Market value weight allocation (not usable for now, need market volume data)
             if mv_weight:
-                beta_mv = np.array(stock_data.iloc[time_period[1] - 1, :] / sum(stock_data.iloc[time_period[1] - 1, :]))
-                return_series_mv.append(stock_return.iloc[time_period[1], :] @ beta_mv)
+                beta_mv = np.array(
+                    stock_data.iloc[time_period[1] - 1, :] / sum(stock_data.iloc[time_period[1] - 1, :]))
+                return_series_mv.append(
+                    stock_return.iloc[time_period[1], :] @ beta_mv)
 
             # S&P 500 Index single day return
             if spx_return is not None:
@@ -239,18 +269,25 @@ def return_compare(
 
     # Calculate cumulative return
     for i in range(1, len(return_series)):
-        return_series[i] = (1 + return_series[i - 1]) * (1 + return_series[i]) - 1
-        return_series_sample[i] = (1 + return_series_sample[i - 1]) * (1 + return_series_sample[i]) - 1
+        return_series[i] = (1 + return_series[i - 1]) * \
+            (1 + return_series[i]) - 1
+        return_series_sample[i] = (
+            1 + return_series_sample[i - 1]) * (1 + return_series_sample[i]) - 1
         if pca:
-            return_series_pca[i] = (1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
+            return_series_pca[i] = (
+                1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
         if equal_weight:
-            return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
+            return_series_ew[i] = (
+                1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
-            return_series_mv[i] = (1 + return_series_mv[i - 1]) * (1 + return_series_mv[i]) - 1
+            return_series_mv[i] = (
+                1 + return_series_mv[i - 1]) * (1 + return_series_mv[i]) - 1
         if spx_return is not None:
-            spx_return_series[i] = (1 + spx_return_series[i - 1]) * (1 + spx_return_series[i]) - 1
+            spx_return_series[i] = (
+                1 + spx_return_series[i - 1]) * (1 + spx_return_series[i]) - 1
 
-    x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
+    x = pd.to_datetime(
+        factor_return.index[sample_size + start: sample_size + end])
     plt.figure(figsize=(10, 4))
     plt.plot(x, return_series, label="Bayesian")
     plt.plot(x, return_series_sample, label="Sample")
@@ -266,7 +303,8 @@ def return_compare(
     # Plot the cumulative return series
     if smart_scheme == "SpecReturn":
         smart_scheme = f"Specific Return={required_return:.2%}"
-    plt.title(f"Cumulative Return ({smart_scheme})", fontdict={"fontweight": "bold"})
+    plt.title(f"Cumulative Return ({smart_scheme})",
+              fontdict={"fontweight": "bold"})
     ax = plt.gca()
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -289,10 +327,12 @@ def return_compare(
 def compare_efficient_fronter(
     stock_return: pd.DataFrame, factor_return: pd.DataFrame, date: str | datetime, stock_slice: int = 1, sample_size: int = 251
 ) -> None:
-    stock_data, stock_return = stock_data.iloc[:, ::stock_slice], stock_return.iloc[:, ::stock_slice]
+    stock_data, stock_return = stock_data.iloc[:,
+                                               ::stock_slice], stock_return.iloc[:, ::stock_slice]
     date_index, _ = process_date(date, None, stock_return, sample_size)
     miu, cov_mat, _ = Bayesian_Posteriors(
-        factor_return.iloc[date_index : date_index + sample_size, :], stock_return.iloc[date_index : date_index + sample_size, :]
+        factor_return.iloc[date_index: date_index + sample_size,
+                           :], stock_return.iloc[date_index: date_index + sample_size, :]
     ).posterior_predictive()
 
     mu_p_list = np.arange(-1e-3, 1e-3, 1e-5)
@@ -310,7 +350,8 @@ def compare_efficient_fronter(
     for mu_p in mu_p_list:
         lambda_ = (C * mu_p - B) / (A * C - B**2)
         gamma = (A - B * mu_p) / (A * C - B**2)
-        alpha = lambda_ * np.linalg.inv(Sigma) @ R + gamma * np.linalg.inv(Sigma) @ One
+        alpha = lambda_ * \
+            np.linalg.inv(Sigma) @ R + gamma * np.linalg.inv(Sigma) @ One
         alpha_list.append(alpha)
         sd = np.sqrt(alpha.T @ Sigma @ alpha)
         sd_list.append(sd)
@@ -320,8 +361,8 @@ def compare_efficient_fronter(
     plt.title("Efficient Frontier", fontsize=10)
 
     # Sample approach
-    R = stock_return.iloc[date_index : date_index + sample_size, :].mean()
-    Sigma = stock_return.iloc[date_index : date_index + sample_size, :].cov()
+    R = stock_return.iloc[date_index: date_index + sample_size, :].mean()
+    Sigma = stock_return.iloc[date_index: date_index + sample_size, :].cov()
     One = np.ones(len(R))
 
     A = R.T @ np.linalg.inv(Sigma) @ R
@@ -333,7 +374,8 @@ def compare_efficient_fronter(
     for mu_p in mu_p_list:
         lambda_ = (C * mu_p - B) / (A * C - B**2)
         gamma = (A - B * mu_p) / (A * C - B**2)
-        alpha = lambda_ * np.linalg.inv(Sigma) @ R + gamma * np.linalg.inv(Sigma) @ One
+        alpha = lambda_ * \
+            np.linalg.inv(Sigma) @ R + gamma * np.linalg.inv(Sigma) @ One
         alpha_list.append(alpha)
         sd = np.sqrt(alpha.T @ Sigma @ alpha)
         sd_list.append(sd)
@@ -349,7 +391,8 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
     if not end:
         end = len(data)
     data = data.rename(columns={data.columns[0]: "Date"})
-    data = data.replace(r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
+    data = data.replace(
+        r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
     return data
 
 
@@ -364,16 +407,19 @@ def stock_switch(ticker_df: pd.DataFrame, month: str, stock_data: pd.DataFrame, 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(__file__))
     # Get risk free rates
-    rf_data = pd.read_excel(os.path.join(base_dir, "data/Effective Federal Funds Rate 2014-2024.xlsx")).set_index("Date")
+    rf_data = pd.read_excel(os.path.join(
+        base_dir, "data/Effective Federal Funds Rate 2014-2024.xlsx")).set_index("Date")
     rf_data = rf_data.apply(lambda x: x / 365 / 100, axis=1)
 
     # Get S&P 500 Index price and returns
-    spx_data = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 14-24.xlsx"))
+    spx_data = pd.read_excel(os.path.join(
+        base_dir, "data/SPX Daily Closing Price 14-24.xlsx"))
     spx_data = data_cleaning(spx_data)
     spx_return = spx_data.pct_change().dropna()
 
     # Get stock universe price and return
-    stock_universe_data = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
+    stock_universe_data = pd.read_excel(os.path.join(
+        base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
     stock_universe_data = data_cleaning(stock_universe_data)
     stock_universe_return = stock_universe_data.pct_change().dropna()
 
@@ -385,13 +431,16 @@ if __name__ == "__main__":
     stock_return = stock_data.pct_change().dropna()
 
     # Get rebalance ticker data
-    ticker_df = pd.read_excel(os.path.join(base_dir, "data/Dual Momentum Stock Selection.xlsx"), sheet_name="Long_list")
+    ticker_df = pd.read_excel(os.path.join(
+        base_dir, "data/Dual Momentum Stock Selection.xlsx"), sheet_name="Long_list")
     ticker_df = data_cleaning(ticker_df)
 
     # Get factor data and clean data
-    factor_return = pd.read_excel(os.path.join(base_dir, "data/10_Industry_Portfolios_Daily.xlsx"))
+    factor_return = pd.read_excel(os.path.join(
+        base_dir, "data/10_Industry_Portfolios_Daily.xlsx"))
     factor_return = data_cleaning(factor_return)
-    common_index = stock_return.index.intersection(factor_return.index).intersection(rf_data.index)
+    common_index = stock_return.index.intersection(
+        factor_return.index).intersection(rf_data.index)
     stock_universe_return, stock_return, factor_return, stock_universe_data, stock_data, rf_data, spx_return = (
         stock_universe_return.loc[common_index, :],
         stock_return.loc[common_index, :],
@@ -422,3 +471,34 @@ if __name__ == "__main__":
         ticker_df=ticker_df,
     )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
+
+    # backtesting
+    for i, target_return in enumerate(Config.TARGET_RETURN_LIST):
+        # initialization
+        dirname = os.path.dirname(__file__)
+        comm_fee = int(Config.COMMISSION) / 1000
+
+        stock_list, combined_df, weights_df = LoadData(
+            target_return, Config.METHOD, dirname)
+        results = RunBacktest(stock_list, combined_df,
+                              weights_df, Config.INIT_CASH, comm_fee, False, False)
+        returns, positions, transactions, gross_lev = results[0].analyzers.getbyname(
+            "pyfolio").get_pf_items()
+
+        returns = returns.squeeze()
+        returns.index = pd.to_datetime(returns.index, format='%Y-%m-%d')
+        spx_prices = pd.read_excel(
+            f'{dirname}/../data/SPX Daily Closing Price 14-24.xlsx', index_col=0)
+        spx_prices.index = pd.to_datetime(spx_prices.index, format='%Y-%m-%d')
+        port_prices = (1 + returns).cumprod() * Config.INIT_CASH
+
+        # align the date of price and returns
+        returns.index = returns.index.to_period('D')
+        spx_prices.index = spx_prices.index.to_period('D')
+        spx_prices = spx_prices.reindex(returns.index, method='ffill')
+        spx_prices.index = spx_prices.index.to_timestamp()
+        returns.index = returns.index.to_timestamp()
+        spx_prices = spx_prices / spx_prices.iloc[0] * Config.INIT_CASH
+
+        PortReport(returns, port_prices, spx_prices,
+                   target_return, Config.COMMISSION, Config.METHOD, dirname)
