@@ -1,10 +1,5 @@
 # A Comprehensive Approach to Construct a Portfolio: Factor Model, Bayesian Shrinkage, and Smart Beta
 
-> JIN Zhao: 1155141435  
-> HAN Jize: 1155141646  
-> RAO Yue: 1155141555  
-> ZHANG Haoxiang: 1155141702
-
 ## Introduction
 
 The primary objective of our project is to maximize the portfolio return by stock selection and allocation. To accomplish this, we have adopted a series of steps. The project course codes are available in the [GitHub repository](https://github.com/Gavin-OP/fina4380-project).
@@ -469,7 +464,6 @@ The data utilized for backtesting purposes is sourced from **iFind**, encompassi
 
 [^3]: The open price data can be downloaded from [here](https://raw.githubusercontent.com/Gavin-OP/fina4380-project/main/data/S&P%20500%20Trading%20Volume,%20%20Open%20Price%2014-24.xlsx).
 [^4]: The close price data can be downloaded from [here](https://raw.githubusercontent.com/Gavin-OP/fina4380-project/main/data/S&P500%20Daily%20Closing%20Price%202014-2024.xlsx).
-
 [^5]: The weights for target daily return = 1.5% are available for download from [here](https://raw.githubusercontent.com/Gavin-OP/fina4380-project/main/output/long_SpecReturn_0015.xlsx), for target daily return = 2% are available for download from [here](https://raw.githubusercontent.com/Gavin-OP/fina4380-project/main/output/long_SpecReturn_002.xlsx), and for target daily return = 2.5% are available for download from [here](https://raw.githubusercontent.com/Gavin-OP/fina4380-project/main/output/long_SpecReturn_0025.xlsx)
 
 Given the target daily return and the approach for generating weights, we utilize the `LoadData` function to load the stock lists, price data, and weights data for each of the stocks. By inputting the acquired data along with our initialization parameters such as initial cash and commission fee into the `RunBacktest` function, we obtain the backtesting results. These results, along with the SPX500 index prices[^6], are then utilized to generate a comprehensive report using the `PortReport` function.
@@ -480,11 +474,11 @@ Given the target daily return and the approach for generating weights, we utiliz
 
 The backtesting results for three target daily returns indicated that a target daily return of 0.15% exhibited the poorest performance. Despite yielding a positive return, it underperformed the market (SPX500). Conversely, the other two target daily returns showcased superior performance compared to the market. This disparity in performance is visually evident in the comparison plots between the market and portfolio value below. However, it is notable that the drawdown appears to be more significant when the market is in a downturn.
 
-![Portfolio vs SPX TDR=0015 COMM = 001](./img/port_vs_spx_0015_comm001_Bayesian.png)
+<img src="./img/port_vs_spx_0015_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0015 COMM = 001" style="zoom: 50%;" />     
 
-![Portfolio vs SPX TDR=002 COMM = 001](./img/port_vs_spx_002_comm001_Bayesian.png)
+<img src="./img/port_vs_spx_002_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=002 COMM = 001" style="zoom: 50%;" />  
 
-![Portfolio vs SPX TDR=0025 COMM = 001](./img/port_vs_spx_0025_comm001_Bayesian.png)
+<img src="./img/port_vs_spx_0025_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0025 COMM = 001" style="zoom: 50%;" />  
 
 In addition to the drawdown and portfolio value, we also present the key performance metrics for the three target daily returns in the table below:
 
