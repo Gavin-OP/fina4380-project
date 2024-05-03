@@ -2,9 +2,7 @@ import datetime
 import os
 import pandas as pd
 import numpy as np
-# import quantstats as qs
 import backtrader as bt
-# import matplotlib.pyplot as plt
 
 
 class PandasData(bt.feeds.PandasData):
@@ -43,8 +41,7 @@ class BLStrategy(bt.Strategy):
     def notify_order(self, order):
         if self.params.printnotify:
             if order.status in [order.Submitted, order.Accepted]:
-                print(
-                    f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
+                print(f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
 
             if order.status in [order.Completed]:
                 if order.isbuy():
@@ -57,8 +54,7 @@ class BLStrategy(bt.Strategy):
                     )
 
             elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-                print(
-                    f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
+                print(f"Order for {order.size} shares of {order.data._name} at {order.created.price} is {order.getstatusname()}")
 
     # for each date, place orders according to the weights
     def next(self):
@@ -74,10 +70,8 @@ class BLStrategy(bt.Strategy):
             data = self.datafeeds[ticker]
             target_percent = weights[ticker]
 
-            self.log(
-                f"{ticker} Open: {data.open[0]}, Close: {data.close[0]}, Target Percent: {target_percent}")
-            self.orders = self.order_target_percent(
-                data, target=target_percent)
+            self.log(f"{ticker} Open: {data.open[0]}, Close: {data.close[0]}, Target Percent: {target_percent}")
+            self.orders = self.order_target_percent(data, target=target_percent)
 
 
 class PortfolioValueObserver(bt.Observer):
@@ -124,14 +118,12 @@ def SyntheticData(duration=499, num_stocks=5):
     )
     prices = prices.reset_index().rename(columns={"index": "Date"})
     prices_open = prices.copy()
-    prices_open.iloc[:, 1:] = prices_open.iloc[:, 1:] + \
-        np.random.normal(loc=0, scale=1, size=prices_open.iloc[:, 1:].shape)
+    prices_open.iloc[:, 1:] = prices_open.iloc[:, 1:] + np.random.normal(loc=0, scale=1, size=prices_open.iloc[:, 1:].shape)
 
     # fake weights for x stocks
     weights = np.random.uniform(-1, 1, (num_days, num_stocks))
     weights = weights / weights.sum(axis=1, keepdims=True)
-    weights = pd.DataFrame(weights, index=date_range, columns=[
-                           f"Stock{i}" for i in range(1, num_stocks + 1)])
+    weights = pd.DataFrame(weights, index=date_range, columns=[f"Stock{i}" for i in range(1, num_stocks + 1)])
     weights = weights.reset_index().rename(columns={"index": "Date"})
 
     return prices, prices_open, weights
@@ -143,8 +135,7 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
     if not end:
         end = len(data)
     data = data.rename(columns={data.columns[0]: "Date"})
-    data = data.replace(
-        r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
+    data = data.replace(r"^\s*$", np.nan, regex=True).iloc[start:end, :].set_index("Date").dropna(axis=1)
     data.index = pd.to_datetime(data.index)
     return data
 
@@ -155,18 +146,15 @@ def RunBacktest(stock_list, combined_df, weights_df, ini_cash, comm_fee, notify,
 
     # read data feeds
     for col in close_prices_df.columns:
-        data = PandasData(
-            dataname=combined_df[[col + "_open", col + "_close"]])
+        data = PandasData(dataname=combined_df[[col + "_open", col + "_close"]])
         cerebro.adddata(data, name=col)
 
     # strategy setting
-    weights_df = weights_df / \
-        weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
+    weights_df = weights_df / weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9
 
     cerebro.broker.setcash(ini_cash)
     cerebro.broker.setcommission(commission=comm_fee)
-    cerebro.addstrategy(BLStrategy, weights=weights_df,
-                        stocks=stock_list, printnotify=notify, printlog=log)
+    cerebro.addstrategy(BLStrategy, weights=weights_df, stocks=stock_list, printnotify=notify, printlog=log)
 
     # analyze strategy
     cerebro.addanalyzer(bt.analyzers.PyFolio, _name="pyfolio")
@@ -197,12 +185,9 @@ if __name__ == "__main__":
     # weights.to_csv(f'{dirname}/../data/synthetic_weights.csv')
 
     # load price and weights data
-    close_prices_df = pd.read_excel(
-        f"{dirname}/../data/S&P500 Daily Closing Price 2014-2024.xlsx", sheet_name="S&P500 2014-2024")
-    open_prices_df = pd.read_excel(
-        f"{dirname}/../data/S&P 500 Trading Volume,  Open Price 14-24.xlsx", sheet_name="S&P 500 Opening Price 14-24")
-    weights_df = pd.read_excel(
-        f"{dirname}/../output/long_SpecReturn_{target_return}.xlsx", sheet_name=sheet_name)
+    close_prices_df = pd.read_excel(f"{dirname}/../data/S&P500 Daily Closing Price 2014-2024.xlsx", sheet_name="S&P500 2014-2024")
+    open_prices_df = pd.read_excel(f"{dirname}/../data/S&P 500 Trading Volume,  Open Price 14-24.xlsx", sheet_name="S&P 500 Opening Price 14-24")
+    weights_df = pd.read_excel(f"{dirname}/../output/long_SpecReturn_{target_return}.xlsx", sheet_name=sheet_name)
 
     # clean data
     close_prices_df = data_cleaning(close_prices_df)
@@ -210,8 +195,7 @@ if __name__ == "__main__":
     weights_df = data_cleaning(weights_df)
 
     # Combine open and close prices into one DataFrame
-    combined_df = open_prices_df.join(
-        close_prices_df, lsuffix="_open", rsuffix="_close")
+    combined_df = open_prices_df.join(close_prices_df, lsuffix="_open", rsuffix="_close")
     combined_df = combined_df.dropna()
 
     # align the date of price and weights
@@ -264,14 +248,12 @@ if __name__ == "__main__":
     #     return results
 
     # store portfolio returns
-    results = RunBacktest(stock_list, combined_df,
-                          weights_df, init_cash, comm_fee, False, False)
+    results = RunBacktest(stock_list, combined_df, weights_df, init_cash, comm_fee, False, False)
     strat = results[0]
     portfolio_stras = strat.analyzers.getbyname("pyfolio")
     returns, positions, transactions, gross_lev = portfolio_stras.get_pf_items()
     # print(returns.head())
-    returns.to_csv(
-        f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv")
+    returns.to_csv(f"{dirname}/../output/returns_{target_return}_{comm}_{sheet_name}.csv")
     # f"{dirname}/../output/returns.csv")
 
     # performance matrices
