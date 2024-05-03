@@ -15,15 +15,11 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-stock_price = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"),
-                            sheet_name="S&P 500 Closing Price 14-24")
+stock_price = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
 clean_stock_price: pd.DataFrame = data_cleaning(stock_price)
-clean_stock_price.to_excel("Cleaned SPX Price.xlsx")
 clean_stock_price.index = pd.to_datetime(clean_stock_price.index)
-clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=6).apply(
-    lambda x: (x[-1] - x[0]) / x[0]).dropna()
-clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in
-                                         clean_stock_semiannually_return.index]
+clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=6).apply(lambda x: (x[-1] - x[0]) / x[0]).dropna()
+clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in clean_stock_semiannually_return.index]
 
 company_names = clean_stock_semiannually_return.columns.to_numpy()
 long_list_output = pd.DataFrame(columns=range(1, 51))
@@ -42,8 +38,8 @@ for i in range(clean_stock_semiannually_return.shape[0]):
     negative_insert_array = np.resize(sorted_company_names[-negative_number:], array_shape)
     remaining_positive_columns = 50 - positive_number
     remaining_negative_columns = 50 - negative_number
-    positive_insert_array[-remaining_positive_columns:] = ''
-    negative_insert_array[-remaining_negative_columns:] = ''
+    positive_insert_array[-remaining_positive_columns:] = ""
+    negative_insert_array[-remaining_negative_columns:] = ""
     if remaining_positive_columns == 0:
         long_list_output.loc[i] = sorted_company_names[:positive_number]
     else:
@@ -56,7 +52,7 @@ for i in range(clean_stock_semiannually_return.shape[0]):
 long_list_output = long_list_output.set_index(clean_stock_semiannually_return.index)
 short_list_output = short_list_output.set_index(clean_stock_semiannually_return.index)
 print(long_list_output)
-with pd.ExcelWriter(os.path.join(base_dir, 'output/Dual Momentum Stock Selection.xlsx')) as writer:
+with pd.ExcelWriter(os.path.join(base_dir, "output/Dual Momentum Stock Selection.xlsx")) as writer:
     long_list_output.index = [str(i) for i in long_list_output.index]
-    long_list_output.to_excel(writer, sheet_name='Long_list')
-    short_list_output.to_excel(writer, sheet_name='Short_list')
+    long_list_output.to_excel(writer, sheet_name="Long_list")
+    short_list_output.to_excel(writer, sheet_name="Short_list")

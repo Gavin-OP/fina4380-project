@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import os
-# Get the Liquidity Premium
-# Delete empty columns
 
 
 def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
@@ -18,14 +16,13 @@ def data_cleaning(data: pd.DataFrame, start: int = None, end: int = None):
 
 # using selected 100 stocks 2014-2024 data for regression
 base_dir = os.path.dirname(os.path.dirname(__file__))
-select_stock_volume = pd.read_excel(os.path.join(base_dir,
-                                    "data/S&P 500 Trading Volume, Open Price 14-24.xlsx"),
-                                    sheet_name="S&P 500 Trading Volume 14-24")
-select_stock_open = pd.read_excel(os.path.join(base_dir,
-                                  "data/S&P 500 Trading Volume, Open Price 14-24.xlsx"),
-                                  sheet_name="S&P 500 Opening Price 14-24")
-select_stock_close = pd.read_excel(os.path.join(base_dir,
-                                   "data/S&P500 Daily Closing price 2014-2024.xlsx"))
+select_stock_volume = pd.read_excel(
+    os.path.join(base_dir, "data/S&P 500 Trading Volume, Open Price 14-24.xlsx"), sheet_name="S&P 500 Trading Volume 14-24"
+)
+select_stock_open = pd.read_excel(
+    os.path.join(base_dir, "data/S&P 500 Trading Volume, Open Price 14-24.xlsx"), sheet_name="S&P 500 Opening Price 14-24"
+)
+select_stock_close = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing price 2014-2024.xlsx"))
 
 # Delete empty columns
 select_stock_volume = data_cleaning(select_stock_volume)
@@ -68,7 +65,7 @@ for target_year in target_year_list:
             #       monthly_single_stock_dollar_volume.shape, monthly_ETF_return.shape)
             Y = monthly_excess_return[1:]
             X1 = monthly_single_stock_return[:-1]
-            X2 = np.sign(monthly_excess_return[:-1])*monthly_single_stock_dollar_volume[:-1]
+            X2 = np.sign(monthly_excess_return[:-1]) * monthly_single_stock_dollar_volume[:-1]
             X = np.column_stack((X1, X2))
             X = sm.add_constant(X)
             # Check the shape of X and Y
@@ -76,15 +73,13 @@ for target_year in target_year_list:
             model = sm.OLS(Y, X)
             results = model.fit()
             beta_X2 = results.params[2]
-            monthly_gamma_mean = monthly_gamma_mean + beta_X2/len(monthly_stock_return.columns)
+            monthly_gamma_mean = monthly_gamma_mean + beta_X2 / len(monthly_stock_return.columns)
         gamma_list.append(monthly_gamma_mean)
         path = f"{target_year}-{target_month:02}"
         print(path, "Finished")
 # Match the index and value
-data_range = pd.date_range(start='2014-01', end='2024-05', freq='M').strftime('%Y-%m')
+data_range = pd.date_range(start="2014-01", end="2024-05", freq="M").strftime("%Y-%m")
 monthly_liquidity = pd.DataFrame(index=data_range)
-monthly_liquidity['Monthly_liquidity'] = gamma_list
+monthly_liquidity["Monthly_liquidity"] = gamma_list
 print("output!")
-monthly_liquidity.to_excel(os.path.join(base_dir, 'output/Liquidity Premium.xlsx'), index=True)
-
-
+monthly_liquidity.to_excel(os.path.join(base_dir, "output/Liquidity Premium.xlsx"), index=True)

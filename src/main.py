@@ -363,6 +363,33 @@ def stock_switch(ticker_df: pd.DataFrame, month: str, stock_data: pd.DataFrame, 
     return stock_data, stock_return
 
 
+def backtesting():
+    for _, target_return in enumerate(Config.TARGET_RETURN_LIST):
+        # initialization
+        dirname = os.path.dirname(__file__)
+        comm_fee = int(Config.COMMISSION) / 1000
+
+        stock_list, combined_df, weights_df = LoadData(target_return, Config.METHOD, dirname)
+        results = RunBacktest(stock_list, combined_df, weights_df, Config.INIT_CASH, comm_fee, False, False)
+        returns, positions, transactions, gross_lev = results[0].analyzers.getbyname("pyfolio").get_pf_items()
+
+        returns = returns.squeeze()
+        returns.index = pd.to_datetime(returns.index, format="%Y-%m-%d")
+        spx_prices = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 14-24.xlsx"), index_col=0)
+        spx_prices.index = pd.to_datetime(spx_prices.index, format="%Y-%m-%d")
+        port_prices = (1 + returns).cumprod() * Config.INIT_CASH
+
+        # align the date of price and returns
+        returns.index = returns.index.to_period("D")
+        spx_prices.index = spx_prices.index.to_period("D")
+        spx_prices = spx_prices.reindex(returns.index, method="ffill")
+        spx_prices.index = spx_prices.index.to_timestamp()
+        returns.index = returns.index.to_timestamp()
+        spx_prices = spx_prices / spx_prices.iloc[0] * Config.INIT_CASH
+
+        PortReport(returns, port_prices, spx_prices, target_return, Config.COMMISSION, Config.METHOD, dirname)
+
+
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(__file__))
     # Get risk free rates
@@ -387,7 +414,7 @@ if __name__ == "__main__":
     stock_return = stock_data.pct_change().dropna()
 
     # Get rebalance ticker data
-    ticker_df = pd.read_excel(os.path.join(base_dir, "data/Dual Momentum Stock Selection.xlsx"), sheet_name="Long_list")
+    ticker_df = pd.read_excel(os.path.join(base_dir, "output/Dual Momentum Stock Selection.xlsx"), sheet_name="Long_list")
     ticker_df = data_cleaning(ticker_df)
 
     # Get factor data and clean data
@@ -424,29 +451,4 @@ if __name__ == "__main__":
     #     ticker_df=ticker_df,
     # )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
-
-    # backtesting
-    for i, target_return in enumerate(Config.TARGET_RETURN_LIST):
-        # initialization
-        dirname = os.path.dirname(__file__)
-        comm_fee = int(Config.COMMISSION) / 1000
-
-        stock_list, combined_df, weights_df = LoadData(target_return, Config.METHOD, dirname)
-        results = RunBacktest(stock_list, combined_df, weights_df, Config.INIT_CASH, comm_fee, False, False)
-        returns, positions, transactions, gross_lev = results[0].analyzers.getbyname("pyfolio").get_pf_items()
-
-        returns = returns.squeeze()
-        returns.index = pd.to_datetime(returns.index, format="%Y-%m-%d")
-        spx_prices = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 14-24.xlsx"), index_col=0)
-        spx_prices.index = pd.to_datetime(spx_prices.index, format="%Y-%m-%d")
-        port_prices = (1 + returns).cumprod() * Config.INIT_CASH
-
-        # align the date of price and returns
-        returns.index = returns.index.to_period("D")
-        spx_prices.index = spx_prices.index.to_period("D")
-        spx_prices = spx_prices.reindex(returns.index, method="ffill")
-        spx_prices.index = spx_prices.index.to_timestamp()
-        returns.index = returns.index.to_timestamp()
-        spx_prices = spx_prices / spx_prices.iloc[0] * Config.INIT_CASH
-
-        PortReport(returns, port_prices, spx_prices, target_return, Config.COMMISSION, Config.METHOD, dirname)
+    backtesting()
