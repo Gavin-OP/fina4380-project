@@ -479,7 +479,9 @@ Given the target daily return and the approach for generating weights, we utiliz
 The backtesting results for three target daily returns indicated that a target daily return of 0.15% exhibited the poorest performance. Despite yielding a positive return, it underperformed the market (SPX500). Conversely, the other two target daily returns showcased superior performance compared to the market. This disparity in performance is visually evident in the comparison plots between the market and portfolio value below. However, it is notable that the drawdown appears to be more significant when the market is in a downturn.
 
 ![Portfolio vs SPX TDR=0015 COMM = 001](./img/port_vs_spx_0015_comm001_Bayesian.png)
+
 ![Portfolio vs SPX TDR=002 COMM = 001](./img/port_vs_spx_002_comm001_Bayesian.png)
+
 ![Portfolio vs SPX TDR=0025 COMM = 001](./img/port_vs_spx_0025_comm001_Bayesian.png)
 
 In addition to the drawdown and portfolio value, we also present the key performance metrics for the three target daily returns in the table below:
