@@ -18,7 +18,7 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 stock_price = pd.read_excel(os.path.join(base_dir, "data/S&P500 Daily Closing Price 2014-2024.xlsx"))
 clean_stock_price: pd.DataFrame = data_cleaning(stock_price)
 clean_stock_price.index = pd.to_datetime(clean_stock_price.index)
-clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=6).apply(lambda x: (x[-1] - x[0]) / x[0]).dropna()
+clean_stock_semiannually_return = clean_stock_price.resample("M").last().rolling(window=7).apply(lambda x: (x[-1] - x[0]) / x[0]).dropna()
 clean_stock_semiannually_return.index = [str(i + timedelta(days=15)).rsplit("-", 1)[0] + "-01" for i in clean_stock_semiannually_return.index]
 
 company_names = clean_stock_semiannually_return.columns.to_numpy()
