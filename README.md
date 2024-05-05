@@ -6,7 +6,9 @@ The primary objective of our project is to maximize the portfolio return by stoc
 
 Firstly, we employ the dual momentum method to select stocks and narrow down the list for portfolio construction. This method combines absolute and relative momentum to identify assets with strong performance potential.
 
-Secondly, we integrate Bayesian shrinkage and Smart Beta techniques on factors data to re-evaluate posterior predictive moments of stock returns. By incorporating the 10 industry factor model and implementation of monthly rebalancing via stock selection, we aim to boost the returns of the portfolio.
+Secondly, we apply Bayesian shrinkage (first layer of Bayesian update) and Black-Litterman Model (second layer of Bayesian update) on factor returns to re-evaluate posterior predictive moments of stock returns with the newest information and investor's view.
+
+Thirdly, we utilize Smart Beta to calculate the weight of each stock within our portfolio. By incorporating the 10 industry factor model and implementation of monthly rebalancing via stock selection, we aim to boost the return of our strategy.
 
 Lastly, we utilize the `Backtrader`[^1] framework and `QuantStats`[^2] for rigorous backtesting to thoroughly evaluate the performance of our strategy. This allows us to assess the historical effectiveness of our approach and make informed decisions on potential refinements.
 
