@@ -127,6 +127,7 @@ def return_compare(
     boundary: tuple[float, float] = (-1, 1),
     spx_return: pd.DataFrame = None,
     pca: bool = False,
+    view: bool = False,
     equal_weight: bool = False,
     mv_weight: bool = False,
     plot_name: str = None,
@@ -142,7 +143,7 @@ def return_compare(
     stock_univ_data, stock_univ_return = stock_data, stock_return
     start, end = process_date(start_date, end_date, stock_return, sample_size)
 
-    return_series, return_series_pca, return_series_sample = [], [], []
+    return_series, return_series_pca, return_series_sample, return_series_view = [], [], [], []
     return_series_ew, return_series_mv = [], []
     result_beta, result_beta_sample, result_beta_ew = (
         pd.DataFrame(columns=stock_univ_data.columns),
@@ -186,22 +187,24 @@ def return_compare(
                 return_series_pca.append(stock_return.iloc[time_period[1], :] @ beta_pca)
 
             # Parameters estimated via Bayesian approach and views (assume future factor returns are known)
-            # if i < end - 1:
-            #     miu_view, cov_mat_view, _ = Bayesian_Posteriors(
-            #         factor_data.iloc[time_period[0] : time_period[1], :],
-            #         stock_return.iloc[time_period[0] : time_period[1], :],
-            #         P="absolute",
-            #         Q=np.array(factor_data.values[time_period[1], :]),
-            #         rf_data.iloc[time_period[1] - 1],
-            #     ).posterior_predictive()
-            # else:
-            #     miu_view, cov_mat_view, _ = Bayesian_Posteriors(
-            #         factor_data.iloc[time_period[0] : time_period[1], :],
-            #         stock_return.iloc[time_period[0] : time_period[1], :],
-            #         rf_data.iloc[time_period[1] - 1]
-            #     ).posterior_predictive()
-            # beta_view = WeightCalc(smartScheme, miu_view, cov_mat_view).retrieve_beta()
-            # return_series_view.append(stock_return.iloc[time_period[1], :] @ beta_view)
+            if view:
+                if i < end - 1:
+                    miu_view, cov_mat_view, _ = Bayesian_Posteriors(
+                        factor_return.iloc[time_period[0] : time_period[1], :],
+                        stock_return.iloc[time_period[0] : time_period[1], :],
+                        P="absolute",
+                        Q=np.array(factor_return.values[time_period[1], :]),
+                    ).posterior_predictive()
+                else:
+                    # No future factors data available
+                    miu_view, cov_mat_view, _ = Bayesian_Posteriors(
+                        factor_return.iloc[time_period[0] : time_period[1], :],
+                        stock_return.iloc[time_period[0] : time_period[1], :],
+                    ).posterior_predictive()
+                beta_view = Weight_Calc(
+                    smart_scheme, miu_view, cov_mat_view, rf_data.iloc[time_period[1] - 1], required_return, boundary
+                ).retrieve_beta()
+                return_series_view.append(stock_return.iloc[time_period[1], :] @ beta_view)
 
             # Parameters estimated via sample data
             miu_sample = stock_return.iloc[time_period[0] : time_period[1], :].mean()
@@ -245,6 +248,8 @@ def return_compare(
         return_series_sample[i] = (1 + return_series_sample[i - 1]) * (1 + return_series_sample[i]) - 1
         if pca:
             return_series_pca[i] = (1 + return_series_pca[i - 1]) * (1 + return_series_pca[i]) - 1
+        if view:
+            return_series_view[i] = (1 + return_series_view[i - 1]) * (1 + return_series_view[i]) - 1
         if equal_weight:
             return_series_ew[i] = (1 + return_series_ew[i - 1]) * (1 + return_series_ew[i]) - 1
         if mv_weight:
@@ -255,9 +260,11 @@ def return_compare(
     x = pd.to_datetime(factor_return.index[sample_size + start : sample_size + end])
     plt.figure(figsize=(10, 4))
     plt.plot(x, return_series, label="Bayesian")
-    plt.plot(x, return_series_sample, label="Sample")
     if pca:
         plt.plot(x, return_series_pca, label="Bayesian (PCA)")
+    if view:
+        plt.plot(x, return_series_view, label="Bayesian (Views)")
+    plt.plot(x, return_series_sample, label="Sample")
     if equal_weight:
         plt.plot(x, return_series_ew, label="Equal Weight")
     if mv_weight:
@@ -371,7 +378,7 @@ def backtesting():
 
         stock_list, combined_df, weights_df = LoadData(target_return, Config.METHOD, dirname)
         results = RunBacktest(stock_list, combined_df, weights_df, Config.INIT_CASH, comm_fee, False, False)
-        returns, positions, transactions, gross_lev = results[0].analyzers.getbyname("pyfolio").get_pf_items()
+        returns, _, _, _ = results[0].analyzers.getbyname("pyfolio").get_pf_items()
 
         returns = returns.squeeze()
         returns.index = pd.to_datetime(returns.index, format="%Y-%m-%d")
@@ -433,22 +440,23 @@ if __name__ == "__main__":
     print("Data loading and cleaning finished.")
 
     # tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
-    # return_compare(
-    #     stock_return=stock_universe_return,
-    #     stock_data=stock_universe_data,
-    #     factor_return=factor_return,
-    #     rf_data=rf_data,
-    #     smart_scheme="SpecReturn",
-    #     boundary=(0, 1),
-    #     required_return=0.0025,
-    #     spx_return=spx_return,
-    #     # plot_name="return_compare_long_SpecReturn_01.png",
-    #     weight_name="long_SpecReturn_0025.xlsx",
-    #     pca=False,
-    #     equal_weight=True,
-    #     mv_weight=False,
-    #     start_date="2020-01-01",
-    #     ticker_df=ticker_df,
-    # )
+    return_compare(
+        stock_return=stock_universe_return,
+        stock_data=stock_universe_data,
+        factor_return=factor_return,
+        rf_data=rf_data,
+        smart_scheme="SpecReturn",
+        boundary=(0, 1),
+        required_return=0.002,
+        spx_return=spx_return,
+        # plot_name="return_compare_long_SpecReturn_01.png",
+        weight_name="long_SpecReturn_002.xlsx",
+        pca=False,
+        view=False,
+        equal_weight=True,
+        mv_weight=False,
+        start_date="2020-01-01",
+        ticker_df=ticker_df,
+    )
     # compare_efficient_fronter(stock_return, factor_return, "2016-10-10")
-    backtesting()
+    # backtesting()
