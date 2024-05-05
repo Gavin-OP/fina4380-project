@@ -72,9 +72,11 @@ for i in range(clean_stock_semiannually_return.shape[0]):
 With the factors provided, each stock's return $r_m\text{, } m \in [1, M]$, is modeled by the below equations:
 
 $$
-r_m = F\beta_m + \epsilon_m \\
-\epsilon_m \sim \mathcal{N}(0, \sigma^2_m\mathbb{I}_T) \\
-f_t \sim \mathcal{N}(\mu_f, \Lambda_f)
+\begin{align*}
+r_m &= F\beta_m + \epsilon_m \\
+\epsilon_m &\sim \mathcal{N}(0, \sigma^2_m\mathbb{I}_T) \\
+f_t &\sim \mathcal{N}(\mu_f, \Lambda_f)
+\end{align*}
 $$
 
 where $r_m$ is a row vector that represents the return time series of stock $m$ spanning in time $T$, $F = [f_1, \cdots, f_t]^T$ is a $T \times K$ matrix that represents the $K$ factors return time series spanning in time $T$, $\beta_m$ is a $K \times 1$ row vector that represents the factor loadings.
@@ -86,9 +88,11 @@ We are aiming to model the Bayesian posterior predictive moments $\text{E}(r_m)$
 To maintain closed-form solutions in MV analysis, we adopted fully conjugate and well established priors: **_Zellner’s g-prior_** for $\beta_m$ and **_Normal-Inverse-Wishart prior (Jeffrey’s priors)_** for $\sigma_m^2$ and $(\mu_f, \Lambda_f)$.
 
 $$
-\beta\mid\sigma_m^2 \sim \mathcal{N}(\beta_{m, 0}, g\sigma_m^2(F^TF)^{-1}) \\
-p(\sigma_m^2) \propto \frac{1}{\sigma_m^2} \\
-p(\mu_f, \Lambda_f) \propto |\Lambda_f|^{-\frac{K+1}{2}}
+\begin{align*}
+\beta\mid\sigma_m^2 &\sim \mathcal{N}(\beta_{m, 0}, g\sigma_m^2(F^TF)^{-1}) \\
+p(\sigma_m^2) &\propto \frac{1}{\sigma_m^2} \\
+p(\mu_f, \Lambda_f) &\propto |\Lambda_f|^{-\frac{K+1}{2}}
+\end{align*}
 $$
 
 Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because it benefits estimation by striking a balance between bias and variance. $g$ emerges as a measure of shrinkage intensity. The smaller value of $g$, the stronger shrinkage towards the prior mean $\beta_{m, 0}$. This hyperparameter ($g^*$) will be optimized in the [below section](#determining-shrinkage-intensity). The priors for $\sigma_m^2$ and $(\mu_f, \Lambda_f)$ are essentially uninformative, so we "let the data speak for itself".
@@ -98,8 +102,10 @@ Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because
 The marginal posterior of $\sigma_m^2$ and $\beta_m$ under the set of prior assumptions is:
 
 $$
-\sigma_m^2\mid\mathcal{F}  \sim \text{Inverse-Gamma }(\frac{T}{2}, \frac{SSR_{g, m}}{2}) \\
-\beta_m\mid\mathcal{F} \sim \text{Multivariate t }(T, \overline{\beta_m}, \Sigma_m)
+\begin{align*}
+\sigma_m^2\mid\mathcal{F}  &\sim \text{Inverse-Gamma }(\frac{T}{2}, \frac{SSR_{g, m}}{2}) \\
+\beta_m\mid\mathcal{F} &\sim \text{Multivariate t }(T, \overline{\beta_m}, \Sigma_m)
+\end{align*}
 $$
 
 where
@@ -155,15 +161,19 @@ def post_sig2_mean(self, beta_0=None, g=None) -> list[float]:
 The marginal posterior of $\mu_f$ and $\Lambda_f$ under the set of prior assumptions is:
 
 $$
-\mu_f\mid\mathcal{F} \sim \text{Multivariate t }(T-K, \bar{f}, \frac{\Lambda_n}{T(T-K)}) \\
-\Lambda_f\mid\mathcal{F} \sim \text{Inverse-Wishart }(T − 1, \Lambda_n)
+\begin{align*}
+\mu_f\mid\mathcal{F} &\sim \text{Multivariate t }(T-K, \bar{f}, \frac{\Lambda_n}{T(T-K)}) \\
+\Lambda_f\mid\mathcal{F} &\sim \text{Inverse-Wishart }(T − 1, \Lambda_n)
+\end{align*}
 $$
 
 where
 
 $$
-\Lambda_n = \sum^T_{t=1}(f_t - \bar{f})(f_t - \bar{f})^T \\
-\bar{f} = \frac{1}{T}\sum^T_{t=1}f_t
+\begin{align*}
+\Lambda_n &= \sum^T_{t=1}(f_t - \bar{f})(f_t - \bar{f})^T \\
+\bar{f} &= \frac{1}{T}\sum^T_{t=1}f_t
+\end{align*}
 $$
 
 ```python
@@ -275,8 +285,10 @@ def posterior_predictive(self) -> tuple[np.ndarray, np.ndarray, float]:
 To track the difference of mean and covariance matrix between Bayesian approach and historical data sample approach, we employed two distance metrics:
 
 $$
-d_1(\mathbf{a}, \mathbf{b}) = \sum_{i=1}^M \mid \mathbf{a}_i - \mathbf{b}_i \mid \\
-d_1(A, B) = \sum_{i=1}^M \sum_{j=1}^i \mid A_{i,j} - B_{i,j} \mid
+\begin{align*}
+d_1(\mathbf{a}, \mathbf{b}) &= \sum_{i=1}^M \mid \mathbf{a}_i - \mathbf{b}_i \mid \\
+d_1(A, B) &= \sum_{i=1}^M \sum_{j=1}^i \mid A_{i,j} - B_{i,j} \mid
+\end{align*}
 $$
 
 The below plots shows the estimates’ difference and estimated $g^*$ at each time point on **_randomly selected_** stocks (i.e. every fifth stock in S&P 500) over last decade:
@@ -401,9 +413,9 @@ It is more interesting to take a look at the cumulative return when we specify a
 
 ![return_compare_long_SpecReturn_01](img/return_compare_long_SpecReturn_01.png)
 
-However, when we adjust the required daily return to 0.22% or 0.25%, Bayesian approach beat the sample approach again. The Bayesian approach even earned an extremely abnormal return. This may result from allocating heavy weight to a single stock, which can be interpreted as its ability to capture the "trading signal".
+However, when we adjust the required daily return to 0.2% or 0.25%, Bayesian approach beat the sample approach again. The Bayesian approach even earned an extremely abnormal return. This may result from allocating heavy weight to a single stock, which can be interpreted as its ability to capture the "trading signal".
 
-![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_0022.png)
+![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_002.png)
 
 ![return_compare_long_SpecReturn_0025](img/return_compare_long_SpecReturn_0025.png)
 

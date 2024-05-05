@@ -439,18 +439,18 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    tracking_diff(stock_return, factor_return)
+    # tracking_diff(stock_return, factor_return)
     return_compare(
         stock_return=stock_universe_return,
         stock_data=stock_universe_data,
         factor_return=factor_return,
         rf_data=rf_data,
-        smart_scheme="MDR",
+        smart_scheme="SpecReturn",
         boundary=(0, 1),
-        required_return=0.0025,
+        required_return=0.002,
         spx_return=spx_return,
-        plot_name="return_compare_MDR.png",
-        weight_name="long_MDR.xlsx",
+        plot_name="return_compare_long_SpecReturn_002.png",
+        weight_name="long_SpecReturn_002.xlsx",
         pca=False,
         view=False,
         equal_weight=True,
