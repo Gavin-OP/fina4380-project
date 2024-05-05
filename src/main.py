@@ -113,7 +113,7 @@ def tracking_diff(
 
     plt.tight_layout()
     if plot_name:
-        plt.savefig(os.path.join("img", plot_name))
+        plt.savefig(os.path.join(base_dir, "img", plot_name))
     plt.show()
 
 
@@ -284,15 +284,15 @@ def return_compare(
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
     plt.legend()
     if plot_name:
-        plt.savefig(os.path.join("img", plot_name))
+        plt.savefig(os.path.join(base_dir, "img", plot_name))
     plt.show()
 
     # Save the weights to Excel
     if weight_name:
-        with pd.ExcelWriter(os.path.join("output", weight_name)) as writer:
+        with pd.ExcelWriter(os.path.join(base_dir, "output", weight_name)) as writer:
             result_beta.to_excel(writer, sheet_name="Bayesian")
             result_beta_sample.to_excel(writer, sheet_name="Sample")
-    result_beta_ew.to_excel(os.path.join("output", "equal_weight.xlsx"))
+    result_beta_ew.to_excel(os.path.join(base_dir, "output", "equal_weight.xlsx"))
 
 
 def compare_efficient_fronter(
@@ -401,7 +401,7 @@ if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(__file__))
     # Get risk free rates
     rf_data = pd.read_excel(os.path.join(base_dir, "data/Effective Federal Funds Rate 2014-2024.xlsx")).set_index("Date")
-    rf_data = rf_data.apply(lambda x: x / 365 / 100, axis=1)
+    rf_data = rf_data.apply(lambda x: x / 252 / 100, axis=1)
 
     # Get S&P 500 Index price and returns
     spx_data = pd.read_excel(os.path.join(base_dir, "data/SPX Daily Closing Price 14-24.xlsx"))
@@ -439,20 +439,20 @@ if __name__ == "__main__":
     )
     print("Data loading and cleaning finished.")
 
-    # tracking_diff(stock_return, factor_return, plot_name="tracking_diff_selected.png")
+    tracking_diff(stock_return, factor_return)
     return_compare(
         stock_return=stock_universe_return,
         stock_data=stock_universe_data,
         factor_return=factor_return,
         rf_data=rf_data,
-        smart_scheme="SpecReturn",
+        smart_scheme="MDR",
         boundary=(0, 1),
-        required_return=0.002,
+        required_return=0.0025,
         spx_return=spx_return,
-        # plot_name="return_compare_long_SpecReturn_01.png",
-        # weight_name="long_SpecReturn_002.xlsx",
+        plot_name="return_compare_MDR.png",
+        weight_name="long_MDR.xlsx",
         pca=False,
-        view=True,
+        view=False,
         equal_weight=True,
         mv_weight=False,
         start_date="2020-01-01",

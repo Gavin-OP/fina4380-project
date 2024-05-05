@@ -393,7 +393,7 @@ This section serves as a really simplified cumulative returns comparison of each
 
 For the long only stocks, we notice that the equal weight strategy has already beat the market after stock selection. For the MDR scheme, even though the Bayesian approach beat the sample approach, they both fail to outperform the equal weight strategy.
 
-![return_compare_long_MDR](img/return_compare_long_MDR.png)
+![return_compare_MDR](img/return_compare_MDR.png)
 
 It is more interesting to take a look at the cumulative return when we specify a required daily return. We discovered that when we specify a relative small required return (0.1%, daily) or extremely large required return (1%, daily), which deviate from equal weight method daily return a lot, the Bayesian approach tends to fail.
 
@@ -401,9 +401,9 @@ It is more interesting to take a look at the cumulative return when we specify a
 
 ![return_compare_long_SpecReturn_01](img/return_compare_long_SpecReturn_01.png)
 
-However, when we adjust the required daily return to 0.2% or 0.25%, Bayesian approach beat the sample approach again. The Bayesian approach even earned an extremely abnormal return. This may result from allocating heavy weight to a single stock, which can be interpreted as its ability to capture the "trading signal".
+However, when we adjust the required daily return to 0.22% or 0.25%, Bayesian approach beat the sample approach again. The Bayesian approach even earned an extremely abnormal return. This may result from allocating heavy weight to a single stock, which can be interpreted as its ability to capture the "trading signal".
 
-![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_002.png)
+![return_compare_long_SpecReturn_002](img/return_compare_long_SpecReturn_0022.png)
 
 ![return_compare_long_SpecReturn_0025](img/return_compare_long_SpecReturn_0025.png)
 
@@ -428,8 +428,8 @@ class PandasData(bt.feeds.PandasData):
     lines = ("open", "close")
     params = (
         ("datetime", None),  # use index as datetime
-        ("open", 0),         # the [0] column is open price
-        ("close", 1),        # the [1] column is close price
+        ("open", 0),  # the [0] column is open price
+        ("close", 1),  # the [1] column is close price
         ("high", 0),
         ("low", 0),
         ("volume", 0),
@@ -440,33 +440,30 @@ class PandasData(bt.feeds.PandasData):
 class PortfolioValueObserver(bt.Observer):
     lines = ("value",)
     plotinfo = dict(plot=True, subplot=True)
+
     def next(self):
         self.lines.value[0] = self._owner.broker.getvalue()
 
 # backtest given prices, weights, initial cash, commission fee
 def RunBacktest(stock_list, combined_df, weights_df, ini_cash, comm_fee, notify, log):
-    cerebro = bt.Cerebro()       # initiate cerebro engine
+    cerebro = bt.Cerebro()  # initiate cerebro engine
 
     # load data feeds
     for col in stock_list:
-        data = PandasData(
-            dataname=combined_df[[col + "_open", col + "_close"]])
+        data = PandasData(dataname=combined_df[[col + "_open", col + "_close"]])
         cerebro.adddata(data, name=col)
 
     # strategy setting
-    weights_df = weights_df / \
-        weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9    # margin
-    cerebro.broker.setcash(100000000)                         # set initial cash
-    cerebro.broker.setcommission(commission=comm_fee)         # set commission
-    cerebro.addstrategy(BLStrategy, weights=weights_df,
-                        stocks=stock_list,
-                        printnotify=False, printlog=False)    # set strategy
-    cerebro.addobserver(PortfolioValueObserver)               # add observer
-    cerebro.addanalyzer(bt.analyzers.PyFolio, _name="pyfolio")# add analyzer
+    weights_df = weights_df / weights_df.sum(axis=1).values.reshape(-1, 1) * 0.9  # margin
+    # set initial cash
+    cerebro.broker.setcash(100000000)
+    cerebro.broker.setcommission(commission=comm_fee)  # set commission
+    cerebro.addstrategy(BLStrategy, weights=weights_df, stocks=stock_list, printnotify=False, printlog=False)  # set strategy
+    cerebro.addobserver(PortfolioValueObserver)  # add observer
+    cerebro.addanalyzer(bt.analyzers.PyFolio, _name="pyfolio")  # add analyzer
 
     # run the strategy
     results = cerebro.run()
-
     return results
 ```
 
