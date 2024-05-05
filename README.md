@@ -110,12 +110,14 @@ $$
 
 where
 
-$$
-SSR_{g, m}=(r_m - F\hat{\beta}_m)^T (r_m - F\hat{\beta}_m) + \frac{1}{g+1}(\hat{\beta}_m - \beta_{m, 0})^T F^T F(\hat{\beta}_m - \beta_{m, 0}) \\
-\overline{\beta_m}=\frac{1}{g+1} \beta_{m, 0} + \frac{g}{g+1} \hat{\beta}_m \\
-\hat{\beta}_m=(F^T F)^{-1} F^T r_m \\
-\Sigma_m=\frac{g}{g+1}(F^T F)^{-1} \frac{SSR_{g, m}}{T}
-$$
+```math
+\begin{align*}
+SSR_{g, m}&=(r_m - F\hat{\beta}_m)^T (r_m - F\hat{\beta}_m) + \frac{1}{g+1}(\hat{\beta}_m - \beta_{m, 0})^T F^T F(\hat{\beta}_m - \beta_{m, 0}) \\
+\overline{\beta_m}&=\frac{1}{g+1} \beta_{m, 0} + \frac{g}{g+1} \hat{\beta}_m \\
+\hat{\beta}_m&=(F^T F)^{-1} F^T r_m \\
+\Sigma_m&=\frac{g}{g+1}(F^T F)^{-1} \frac{SSR_{g, m}}{T}
+\end{align*}
+```
 
 ```python
 # List of Mean and Var of beta_m
@@ -240,17 +242,21 @@ def g_likelihood(self, g) -> float:
 
 Denote $\text{E}[\cdot\mid\mathcal{F}] = \text{E}[\cdot], \text{Var}[\cdot\mid\mathcal{F}] = \text{Var}[\cdot], \text{Cov}[\cdot\mid\mathcal{F}] = \text{Cov}[\cdot]$, then the posterior predictive moments of stock returns under the Bayesian factor model are:
 
-$$
-\text{E}[r_m]=\text{E}[\beta_m]^T \text{E}[\mu_f] \\
-\text{Var}[r_m]=\text{E}[\sigma_m^2]+\text{Tr}(\text{E}[f f^T] \text{Var}[\beta_m])+\text{E}[\beta_m]^T \text{Var}[f] \text{E}[\beta_m] \\
-\text{Cov}(r_i, r_j)=\text{E}[\beta_i]^T \text{Var}[f] \text{E}[\beta_j]
-$$
+```math
+\begin{align*}
+\text{E}[r_m]&=\text{E}[\beta_m]^T \text{E}[\mu_f] \\
+\text{Var}[r_m]&=\text{E}[\sigma_m^2]+\text{Tr}(\text{E}[f f^T] \text{Var}[\beta_m])+\text{E}[\beta_m]^T \text{Var}[f] \text{E}[\beta_m] \\
+\text{Cov}(r_i, r_j)&=\text{E}[\beta_i]^T \text{Var}[f] \text{E}[\beta_j]
+\end{align*}
+```
 
 where
 
 $$
-\text{E}[f f^T]=\text{E}[\Lambda_f]+\text{Var}[\mu_f]+\text{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
-\text{Var}[f]=\text{E}[\Lambda_f]+\text{Var}[\mu_f]
+\begin{align*}
+\text{E}[f f^T]&=\text{E}[\Lambda_f]+\text{Var}[\mu_f]+\text{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
+\text{Var}[f]&=\text{E}[\Lambda_f]+\text{Var}[\mu_f]
+\end{align*}
 $$
 
 with $\text{E}[\mu_f], \text{Var}[\mu_f], \text{E}[\sigma_m^2], \text{E}[\beta_m], \text{Var}[\beta_m], \text{E}[\Lambda_f]$ obtained from the posterior distributions after Bayesian updates mentioned above.
@@ -284,12 +290,12 @@ def posterior_predictive(self) -> tuple[np.ndarray, np.ndarray, float]:
 
 To track the difference of mean and covariance matrix between Bayesian approach and historical data sample approach, we employed two distance metrics:
 
-$$
+```math
 \begin{align*}
 d_1(\mathbf{a}, \mathbf{b}) &= \sum_{i=1}^M \mid \mathbf{a}_i - \mathbf{b}_i \mid \\
 d_1(A, B) &= \sum_{i=1}^M \sum_{j=1}^i \mid A_{i,j} - B_{i,j} \mid
 \end{align*}
-$$
+```
 
 The below plots shows the estimates’ difference and estimated $g^*$ at each time point on **_randomly selected_** stocks (i.e. every fifth stock in S&P 500) over last decade:
 
