@@ -72,7 +72,7 @@ With the factors provided, each stock's return $r_m\text{, } m \in [1, M]$, is m
 $$
 r_m = F\beta_m + \epsilon_m \\
 \epsilon_m \sim \mathcal{N}(0, \sigma^2_m\mathbb{I}_T) \\
-f_t \sim \mathcal{N}(\mu_f, \Omega_f)
+f_t \sim \mathcal{N}(\mu_f, \Lambda_f)
 $$
 
 where $r_m$ is a row vector that represents the return time series of stock $m$ spanning in time $T$, $F = [f_1, \cdots, f_t]^T$ is a $T \times K$ matrix that represents the $K$ factors return time series spanning in time $T$, $\beta_m$ is a $K \times 1$ row vector that represents the factor loadings.
@@ -81,15 +81,15 @@ We are aiming to model the Bayesian posterior predictive moments $\text{E}(r_m)$
 
 ### Prior Distributions
 
-To maintain closed-form solutions in MV analysis, we adopted fully conjugate and well established priors: **_Zellner’s g-prior_** for $\beta_m$ and **_Normal-Inverse-Wishart prior (Jeffrey’s priors)_** for $\sigma_m^2$ and $(\mu_f, \Omega_f)$.
+To maintain closed-form solutions in MV analysis, we adopted fully conjugate and well established priors: **_Zellner’s g-prior_** for $\beta_m$ and **_Normal-Inverse-Wishart prior (Jeffrey’s priors)_** for $\sigma_m^2$ and $(\mu_f, \Lambda_f)$.
 
 $$
 \beta\mid\sigma_m^2 \sim \mathcal{N}(\beta_{m, 0}, g\sigma_m^2(F^TF)^{-1}) \\
 p(\sigma_m^2) \propto \frac{1}{\sigma_m^2} \\
-p(\mu_f, \Omega_f) \propto |\Omega_f|^{-\frac{K+1}{2}}
+p(\mu_f, \Lambda_f) \propto |\Lambda_f|^{-\frac{K+1}{2}}
 $$
 
-Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because it benefits estimation by striking a balance between bias and variance. $g$ emerges as a measure of shrinkage intensity. The smaller value of $g$, the stronger shrinkage towards the prior mean $\beta_{m, 0}$. This hyperparameter ($g^*$) will be optimized in the [below section](#determining-shrinkage-intensity). The priors for $\sigma_m^2$ and $(\mu_f, \Omega_f)$ are essentially uninformative, so we "let the data speak for itself".
+Here we propose $\beta_{m, 0} = \overrightarrow{0}$ to ridge regression, because it benefits estimation by striking a balance between bias and variance. $g$ emerges as a measure of shrinkage intensity. The smaller value of $g$, the stronger shrinkage towards the prior mean $\beta_{m, 0}$. This hyperparameter ($g^*$) will be optimized in the [below section](#determining-shrinkage-intensity). The priors for $\sigma_m^2$ and $(\mu_f, \Lambda_f)$ are essentially uninformative, so we "let the data speak for itself".
 
 ### Posterior Distributions
 
@@ -150,17 +150,17 @@ def post_sig2_mean(self, beta_0=None, g=None) -> list[float]:
     return sig2_list
 ```
 
-The marginal posterior of $\mu_f$ and $\Omega_f$ under the set of prior assumptions is:
+The marginal posterior of $\mu_f$ and $\Lambda_f$ under the set of prior assumptions is:
 
 $$
-\mu_f\mid\mathcal{F} \sim \text{Multivariate t }(T-K, \bar{f}, \frac{\Omega_n}{T(T-K)}) \\
-\Omega_f\mid\mathcal{F} \sim \text{Inverse-Wishart }(T − 1, \Omega_n)
+\mu_f\mid\mathcal{F} \sim \text{Multivariate t }(T-K, \bar{f}, \frac{\Lambda_n}{T(T-K)}) \\
+\Lambda_f\mid\mathcal{F} \sim \text{Inverse-Wishart }(T − 1, \Lambda_n)
 $$
 
 where
 
 $$
-\Omega_n = \sum^T_{t=1}(f_t - \bar{f})(f_t - \bar{f})^T \\
+\Lambda_n = \sum^T_{t=1}(f_t - \bar{f})(f_t - \bar{f})^T \\
 \bar{f} = \frac{1}{T}\sum^T_{t=1}f_t
 $$
 
@@ -237,11 +237,11 @@ $$
 where
 
 $$
-\text{E}[f f^T]=\text{E}[\Omega_f]+\text{Var}[\mu_f]+\text{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
-\text{Var}[f]=\text{E}[\Omega_f]+\text{Var}[\mu_f]
+\text{E}[f f^T]=\text{E}[\Lambda_f]+\text{Var}[\mu_f]+\text{E}[\mu_f] \mathbb{E}[\mu_f]^T \\
+\text{Var}[f]=\text{E}[\Lambda_f]+\text{Var}[\mu_f]
 $$
 
-with $\text{E}[\mu_f], \text{Var}[\mu_f], \text{E}[\sigma_m^2], \text{E}[\beta_m], \text{Var}[\beta_m], \text{E}[\Omega_f]$ obtained from the posterior distributions after Bayesian updates mentioned above.
+with $\text{E}[\mu_f], \text{Var}[\mu_f], \text{E}[\sigma_m^2], \text{E}[\beta_m], \text{Var}[\beta_m], \text{E}[\Lambda_f]$ obtained from the posterior distributions after Bayesian updates mentioned above.
 
 ```python
 # Posterior predictive return distribution (mean vector and covariance matrix) and shrinkage parameter g*
@@ -282,6 +282,92 @@ The below plots shows the estimates’ difference and estimated $g^*$ at each ti
 ![tracking diff](img/tracking_diff_selected.png)
 
 We note that there is a significant shock on distance in covariance estimate and $g*$, likely resulted from the abnormal behavior of stock prices during the COVID-19 period.
+
+## Integration with Black-Litterman Model on Factors
+
+### Second Layer of Bayesian Update
+
+In this section, we are aiming to incorporate investor's forward-looking analyses on return and covariance matrix of the **_underlying factors_** via the second layer of Bayesian update. These information are not necessarily captured by the historical data, but can be strategically integrated into the statistical model. Here we only discuss its application on factor returns $\mu_f$.
+
+### Model Specification of $\mu_f$
+
+Let $P \in \mathbb{R}^{N×K}$ denote a full-ranked pick matrix, $Q \in \mathbb{R}^N$ represent the views vector. A relative view $x\%$ on $F_1$ outperform $F_2$, and an absolute view $y\%$ on $F_2$ can be represented as:
+
+$$
+P = \begin{bmatrix}
+1 & -1 & 0 \\
+0 & 1 & 0 \\
+\end{bmatrix},
+\qquad
+Q = \begin{bmatrix}
+x\% \\
+y\% \\
+\end{bmatrix}
+$$
+
+With the formulation:
+
+$$ Q = P\mu_f + \epsilon $$
+
+and assume that the noise $\epsilon$ and $\mu_f$ have a joint multivariate Student-t distribution conditional on $\mathcal{F}$, where $\text{Var}(\epsilon|\mathcal{F}) = Ω$, and $\text{Cov}(\epsilon, \mu_f|\mathcal{F}) = 0$. The covariance matrix, $\Omega$, reflects one’s confidence in a particular view. A larger variance indicates uncertainty, dampening its influence on the updated belief. In the Black-Litterman model, it’s commonly assumed that $\Omega$ is diagonal.
+
+### Posterior Distribution of $\mu_f$
+
+According to Schöttle et al. (2010), the updated joint posterior distribution of $\mu_f$ and $Q$ also follows multivariate Student-t distribution. Hence, the marginal posterior distribution of $\mu_f$ after the second Bayesian update is:
+
+$$
+\begin{align*}
+    \mu_f \mid \mathcal{F}, Q=q \sim \text{Multivariate t }\Big(T-K,
+    \bar{f}+\Sigma_n P^T(P \Sigma_n P^T+\Omega)^{-1}(q-P \bar{f}), \\
+    \Sigma_n-\Sigma_n P^T(P \Sigma_n P^T+\Omega)^{-1} P \Sigma_n\Big)
+\end{align*}
+$$
+
+where $\Sigma_n = \frac{\Lambda_n}{T(T-K)}$. If we further infer that the error $\epsilon$ in $Q$ arises from a lifted uncertainty in $\mu_f$, then:
+
+$$
+\Omega = cP\Sigma_nP^T
+$$
+
+for some constant $c>0$.
+
+Subsequent to the second Bayesian update, the posterior distribution of $\mu_f$ is:
+
+$$
+\begin{align*}
+    \mu_f \mid \mathcal{F}, Q=q \sim \text{Multivariate t }\Big(T-K,
+    \bar{f}+(\frac{1}{c+1}) \Sigma_n P^T(P \Sigma_n P^T)^{-1}(q-P \bar{f}), \\
+    \Sigma_n-(\frac{1}{c+1}) \Sigma_n P^T(P \Sigma_n P^T)^{-1} P \Sigma_n\Big)
+\end{align*}
+$$
+
+```python
+def post_miu_f(self) -> tuple[np.ndarray, np.ndarray]:
+        f_bar = np.array(self.F.mean(axis=0)).T
+        Lambda_n = np.zeros((self.K, self.K))
+        for t in range(self.T):
+            f_t = self.F[t, :]
+            Lambda_n += np.outer(f_t - f_bar, f_t - f_bar)
+        # With views about future factor returns
+        if self.P == "absolute":
+            self.P = np.eye(self.K)
+        elif self.P == "relative":
+            self.P = np.eye(self.K)
+            for i in range(self.K - 1):
+                self.P[i, i + 1] = -1
+        if not self.c:
+            self.c = np.sqrt(self.T)
+        Sigma_n = Lambda_n / self.T / (self.T - self.K)
+        miu_f_mean = f_bar + 1 / (self.c + 1) * Sigma_n @ self.P.T @ np.linalg.inv(self.P @ Sigma_n @ self.P.T) @ (self.Q - self.P @ f_bar)
+        miu_f_var = (
+            (self.T - self.K)
+            / (self.T - self.K - 2)
+            * (Sigma_n - 1 / (self.c + 1) * Sigma_n @ self.P.T @ np.linalg.inv(self.P @ Sigma_n @ self.P.T) @ self.P @ Sigma_n)
+        )
+        return miu_f_mean, miu_f_var
+```
+
+In scenarios where $c$ approaches zero, $Q$ accurately mirrors $P_{μ_f}$. Conversely, as $c \rightarrow \infty$, $Q=q$ loses its significance, defaulting back to the original posterior distribution.
 
 ## Integration with Smart Beta
 
@@ -332,75 +418,6 @@ Utilizing `Backtrader`, our methodology entails replicating the daily rebalancin
 
 The operational logic is as follows: leveraging the close price data for the current day, we calculate the requisite weights and corresponding share allocations. These share allocations are rounded down to integers, and orders are placed at the opening price of the subsequent day. We operate under the assumption of seamless execution at the opening price, devoid of any market impact.
 
-```python
-class BLStrategy(bt.Strategy):
-    # list for tickers
-    params = (("stocks", []), ("printnotify", False), ("printlog", False))
-
-    def log(self, txt, dt=None):
-        if self.params.printlog:
-            dt = dt or self.datas[0].datetime.date(0)
-            print("%s, %s" % (dt.isoformat(), txt))
-
-    def __init__(self, weights):
-        self.datafeeds = {}             # data feeds
-        self.weights = weights          # weights for all stocks
-        self.committed_cash = 0
-        self.bar_executed = 0
-
-        # price data and order tracking for each stock
-        for i, ticker in enumerate(self.params.stocks):
-            self.datafeeds[ticker] = self.datas[i]
-
-    def notify_order(self, order):
-        if self.params.printnotify:
-            if order.status in [order.Submitted, order.Accepted]:
-                print(
-                    f"Order for {order.size} shares of {order.data._name}"
-                    f"at {order.created.price} is {order.getstatusname()}")
-
-            if order.status in [order.Completed]:
-                if order.isbuy():
-                    print(
-                        f"Bought {order.executed.size} shares of {order.data._name} "
-                        f"at {order.executed.price}, "
-                        "cost: {order.executed.value}, "
-                        "comm: {order.executed.comm}"
-                    )
-                elif order.issell():
-                    print(
-                        f"Sold {order.executed.size} shares of {order.data._name} "
-                        f"at {order.executed.price}, "
-                        f"cost: {order.executed.value}, "
-                        f"comm: {order.executed.comm}"
-                    )
-
-            elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-                print(
-                    f"Order for {order.size} shares of {order.data._name} "
-                    f"at {order.created.price} is {order.getstatusname()}")
-
-    # for each date, place orders according to the weights
-    def next(self):
-        date = self.data.datetime.date(0)
-        weights = self.weights.loc[date.strftime("%Y-%m-%d")]
-
-        if not self.position:
-            self.log("We do not hold any positions at the moment")
-        self.log(f"Total portfolio value: {self.broker.getvalue()}")
-
-        for ticker in self.params.stocks:
-            data = self.datafeeds[ticker]
-            target_percent = weights[ticker]
-
-            self.log(
-                f"{ticker} Open: {data.open[0]}, "
-                f"Close: {data.close[0]}, "
-                f"Target Percent: {target_percent}")
-            self.orders = self.order_target_percent(
-                data, target=target_percent)
-```
-
 When configuring `Backtrader`, we eschew predefined templates for the data feeds, as only the open and close prices for all SPX stocks are required. Additionally, a new observer is integrated to calculate the portfolio value at each time point. The initial cash allocation is fixed at $100,000,000, with a margin of 10% and a commission rate of 0.1% applied. The execution of the backtesting is facilitated by the `Cerebro` engine.
 
 ```python
@@ -449,11 +466,6 @@ def RunBacktest(stock_list, combined_df, weights_df, ini_cash, comm_fee, notify,
     results = cerebro.run()
 
     return results
-
-# initialization
-comm = "001"
-comm_fee = int(comm) / 1000
-init_cash = 100000000
 ```
 
 Following the computation of daily returns by subtracting the commission from the portfolio value return using `Backtrader` backtesting, the subsequent analysis leverages `QuantStats` to comprehensively evaluate portfolio performance. Key metrics, including cumulative return, annualized return, annualized volatility, Sharpe ratio, Sortino ratio, maximum drawdown, Calmar ratio, value-at-risk, and expected shortfall, are meticulously assessed. `QuantStats` streamlines the process by automatically generating a report containing all the metrics and plots. Additionally, we aim to dynamically compare the performance of our portfolio with the benchmark SPX500, while also visualizing the dynamic drawdown plot of the portfolio.
@@ -474,11 +486,11 @@ Given the target daily return and the approach for generating weights, we utiliz
 
 The backtesting results for three target daily returns indicated that a target daily return of 0.15% exhibited the poorest performance. Despite yielding a positive return, it underperformed the market (SPX500). Conversely, the other two target daily returns showcased superior performance compared to the market. This disparity in performance is visually evident in the comparison plots between the market and portfolio value below. However, it is notable that the drawdown appears to be more significant when the market is in a downturn.
 
-<img src="./img/port_vs_spx_0015_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0015 COMM = 001" style="zoom: 50%;" />     
+<img src="./img/port_vs_spx_0015_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0015 COMM = 001" style="zoom: 50%;" />
 
-<img src="./img/port_vs_spx_002_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=002 COMM = 001" style="zoom: 50%;" />  
+<img src="./img/port_vs_spx_002_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=002 COMM = 001" style="zoom: 50%;" />
 
-<img src="./img/port_vs_spx_0025_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0025 COMM = 001" style="zoom: 50%;" />  
+<img src="./img/port_vs_spx_0025_comm001_Bayesian.png" alt="Portfolio vs SPX TDR=0025 COMM = 001" style="zoom: 50%;" />
 
 In addition to the drawdown and portfolio value, we also present the key performance metrics for the three target daily returns in the table below:
 
